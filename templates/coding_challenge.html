@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Coding Challenge - Interview{% endblock %}
+
+{% block extra_css %}
+<style>
+    .coding-container {
+        display: flex;
+        height: calc(100vh - 120px);
+        gap: 0;
+    }
+
+    .problem-panel {
+        flex: 1;
+        padding: 30px;
+        background: #f9f9f9;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+    }
+
+    .editor-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .challenge-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+
+    .difficulty-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .difficulty-easy {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .difficulty-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .difficulty-hard {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .time-limit {
+        padding: 10px 15px;
+        background: #e3f2fd;
+        border-left: 4px solid #667eea;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .description {
+        color: #444;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+
+    .test-cases {
+        margin-top: 30px;
+    }
+
+    .test-case {
+        background: white;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        border-left: 3px solid #667eea;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+    }
+
+    .test-label {
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 5px;
+    }
+
+    .code-editor {
+        flex: 1;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .editor-toolbar {
+        background: #2c3e50;
+        color: white;
+        padding: 10px 15px;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    textarea.code-input {
+        flex: 1;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        border: none;
+        resize: none;
+        background: #f5f5f5;
+    }
+
+    .code-input:focus {
+        outline: none;
+        background: white;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .btn-run {
+        flex: 1;
+        padding: 12px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-run:hover {
+        background: #218838;
+    }
+
+    .btn-submit {
+        flex: 1;
+        padding: 12px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-submit:hover {
+        background: #5568d3;
+    }
+
+    .output-panel {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .output-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #2c3e50;
+    }
+
+    .test-result {
+        padding: 8px;
+        margin-bottom: 5px;
+        border-left: 3px solid #ddd;
+        border-radius: 2px;
+    }
+
+    .test-result.pass {
+        background: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+
+    .test-result.fail {
+        background: #f8d7da;
+        border-color: #dc3545;
+        color: #721c24;
+    }
+
+    .timer {
+        font-size: 12px;
+        color: #7f8c8d;
+    }
+
+    .complexity-info {
+        background: #e8f4f8;
+        padding: 10px 15px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 10px;
+        color: #0c5460;
+    }
+
+    @media (max-width: 1200px) {
+        .coding-container {
+            flex-direction: column;
+        }
+
+        .problem-panel {
+            border-right: none;
+            border-bottom: 1px solid #ddd;
+            height: auto;
+            max-height: 40%;
+        }
+
+        .editor-panel {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="interview-container" style="max-width: 100%; margin: 0; padding: 0;">
+    <div class="coding-container">
+        <!-- Problem Description Panel -->
+        <div class="problem-panel">
+            <div class="challenge-title" id="challengeTitle"></div>
+            <span class="difficulty-badge" id="difficultyBadge"></span>
+
+            <div class="time-limit">
+                <strong>Time Limit:</strong> <span id="timeLimit"></span> minutes
+            </div>
+
+            <div class="description" id="description"></div>
+
+            <div class="test-cases">
+                <h4>Sample Test Cases:</h4>
+                <div id="testCasesContainer"></div>
+            </div>
+
+            <div class="complexity-info" id="complexityInfo" style="display: none;">
+                <strong>Note:</strong> <span id="complexityNote"></span>
+            </div>
+        </div>
+
+        <!-- Code Editor Panel -->
+        <div class="editor-panel">
+            <div class="code-editor">
+                <div class="editor-toolbar">
+                    <span id="languageName"></span>
+                    <span class="timer">
+                        Elapsed: <span id="elapsedTime">0:00</span> / <span id="totalTime"></span> min
+                    </span>
+                </div>
+                <textarea class="code-input" id="codeInput" placeholder="Enter your code here..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-run" onclick="runCode()">Run Code</button>
+                <button class="btn-submit" onclick="submitCode()">Submit Solution</button>
+            </div>
+
+            <div class="output-panel">
+                <div class="output-title">Output & Test Results:</div>
+                <div id="outputContainer" style="color: #666;">No output yet. Click "Run Code" to test.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let challenge = null;
+    let language = '{{ language }}';
+    let elapsedSeconds = 0;
+    let timeLimit = 0;
+
+    function initChallenge() {
+        // Load challenge data (would be passed from server)
+        challenge = {{ challenge_json | safe }};
+        timeLimit = challenge.time_limit_minutes;
+
+        document.getElementById('challengeTitle').textContent = challenge.title;
+        document.getElementById('languageName').textContent = language.toUpperCase();
+        document.getElementById('totalTime').textContent = timeLimit;
+        document.getElementById('timeLimit').textContent = timeLimit;
+
+        // Set difficulty badge
+        const badge = document.getElementById('difficultyBadge');
+        badge.textContent = challenge.difficulty;
+        badge.className = 'difficulty-badge difficulty-' + challenge.difficulty.toLowerCase();
+
+        document.getElementById('description').textContent = challenge.description;
+
+        // Add starter code
+        document.getElementById('codeInput').value = challenge.starter_code;
+
+        // Display test cases
+        const container = document.getElementById('testCasesContainer');
+        challenge.test_cases.forEach((tc, i) => {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-case';
+            testDiv.innerHTML = `
+                <div class="test-label">Test Case ${i + 1}</div>
+                <div><strong>Input:</strong> ${tc.input}</div>
+                <div><strong>Expected Output:</strong> ${tc.expected_output}</div>
+            `;
+            container.appendChild(testDiv);
+        });
+
+        // Start timer
+        startTimer();
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            elapsedSeconds++;
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            document.getElementById('elapsedTime').textContent =
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Warn if time running out
+            if (elapsedSeconds > timeLimit * 60 - 300) {
+                document.getElementById('elapsedTime').style.color = '#dc3545';
+            }
+        }, 1000);
+    }
+
+    async function runCode() {
+        const code = document.getElementById('codeInput').value;
+        const output = document.getElementById('outputContainer');
+
+        output.innerHTML = '<p>Running code...</p>';
+
+        try {
+            const response = await fetch('/api/run-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: code,
+                    language: language,
+                    challenge_id: challenge.id
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                displayTestResults(result.test_results, result.passed_tests, result.total_tests);
+            } else {
+                output.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+            }
+        } catch (error) {
+            output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    function displayTestResults(testResults, passed, total) {
+        const output = document.getElementById('outputContainer');
+        let html = `<div style="margin-bottom: 10px;">Passed: ${passed}/${total}</div>`;
+
+        testResults.forEach(result => {
+            const className = result.passed ? 'test-result pass' : 'test-result fail';
+            html += `
+                <div class="${className}">
+                    <strong>Test ${result.test_number}:</strong> ${result.passed ? 'PASSED' : 'FAILED'}
+                    ${!result.passed ? `<br>Expected: ${result.expected}<br>Got: ${result.actual}` : ''}
+                </div>
+            `;
+        });
+
+        output.innerHTML = html;
+    }
+
+    function submitCode() {
+        const code = document.getElementById('codeInput').value;
+        if (code.trim().length === 0) {
+            alert('Please write some code before submitting');
+            return;
+        }
+
+        const confirmed = confirm('Submit your solution? You won\'t be able to edit after submission.');
+        if (confirmed) {
+            // Submit solution (would POST to server)
+            console.log('Submitting code for challenge:', challenge.id);
+            alert('Solution submitted! Your code has been evaluated.');
+        }
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', initChallenge);
+</script>
+{% endblock %}
