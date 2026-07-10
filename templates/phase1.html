@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Phase 1 - Interview{% endblock %}
+
+{% block extra_css %}
+<style>
+    .interview-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .question-display {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+    }
+
+    .question-number {
+        font-size: 12px;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .question-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+    }
+
+    .question-meta {
+        font-size: 12px;
+        color: #7f8c8d;
+    }
+
+    .answer-input {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        resize: vertical;
+        min-height: 120px;
+        margin-bottom: 15px;
+    }
+
+    .answer-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .timer {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 10px;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #d6eaf8;
+        border-radius: 5px;
+    }
+
+    .progress-info strong {
+        color: #2980b9;
+    }
+
+    .btn-skip {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-skip:hover {
+        background: #c0392b;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="interview-container">
+    <h2>🎤 Phase 1: Interview</h2>
+
+    <div class="progress-info">
+        <div>
+            <strong>Candidate:</strong> {{ candidate.role }}<br>
+            <strong>Difficulty:</strong> {{ candidate.difficulty_level }}
+        </div>
+        <div>
+            <div id="progressText">Ready to start</div>
+            <div style="margin-top: 5px; font-size: 12px; color: #7f8c8d;">
+                Time: <span id="elapsedTime">0:00</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="introSection" class="alert alert-info">
+        <strong>Welcome to your technical interview!</strong>
+        <p style="margin-top: 10px; line-height: 1.6;">
+            You'll be asked {{ totalQuestions }} questions based on your profile. You have up to 2 minutes per question.
+            Click "Submit Answer" to move to the next question, or click "Skip" if you need to pass.
+        </p>
+        <button class="btn-primary" onclick="startInterview()" style="margin-top: 15px;">Start Interview</button>
+    </div>
+
+    <div id="questionSection" class="hidden">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <div class="question-display">
+            <div class="question-number" id="questionNumber"></div>
+            <div class="question-text" id="questionText"></div>
+            <div class="question-meta" id="questionMeta"></div>
+        </div>
+
+        <div>
+            <label style="display: block; margin-bottom: 10px; font-weight: 600;">Your Answer:</label>
+            <textarea id="answerInput" class="answer-input" placeholder="Type your answer here..."></textarea>
+            <div class="timer">
+                ⏱️ Response time: <span id="responseTime">0</span>s / 120s
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="button" class="btn-skip" onclick="skipQuestion()">Skip Question</button>
+            <button type="button" class="btn-primary" onclick="submitAnswer()">Submit Answer</button>
+        </div>
+    </div>
+
+    <div id="completeSection" class="hidden">
+        <div class="alert alert-success">
+            <strong>Interview Complete! ✓</strong>
+            <p style="margin-top: 10px;">All responses have been recorded. Proceeding to scoring...</p>
+        </div>
+        <div class="loading" style="display: block;">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px;">Analyzing your responses...</p>
+        </div>
+    </div>
+
+    <div class="loading" id="mainLoading">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px;">Loading interview...</p>
+    </div>
+</div>
+
+<script>
+    let currentQuestion = null;
+    let totalQuestions = {{ candidate|length }};
+    let questionStartTime = null;
+    let interviewStartTime = null;
+    let answerStartTime = null;
+
+    async function startInterview() {
+        showLoading(true);
+
+        try {
+            const response = await fetch('/phase1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'init'
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                totalQuestions = result.total_questions;
+                currentQuestion = result.first_question;
+                interviewStartTime = Date.now();
+                answerStartTime = Date.now();
+
+                document.getElementById('introSection').classList.add('hidden');
+                document.getElementById('questionSection').classList.remove('hidden');
+                document.getElementById('mainLoading').style.display = 'none';
+
+                displayQuestion(currentQuestion);
+                startTimers();
+            } else {
+                showError('Failed to start interview');
+            }
+        } catch (error) {
+            console.error('Start interview error:', error);
+            showError('Error: ' + error.message);
+        }
+        showLoading(false);
+    }
+
+    function displayQuestion(question) {
+        currentQuestion = question;
+        questionStartTime = Date.now();
+
+        document.getElementById('questionNumber').textContent =
+            `Q${question.number} of ${totalQuestions} • ${question.section}`;
+        document.getElementById('questionText').textContent = question.question;
+        document.getElementById('questionMeta').textContent =
+            `Category: ${question.category}`;
+
+        const progress = ((question.number - 1) / totalQuestions) * 100;
+        document.getElementById('progressBar').style.width = progress + '%';
+        document.getElementById('progressText').textContent =
+            `Question ${question.number} of ${totalQuestions}`;
+
+        document.getElementById('answerInput').value = '';
+        document.getElementById('answerInput').focus();
+        document.getElementById('responseTime').textContent = '0';
+    }
+
+    function startTimers() {
+        setInterval(() => {
+            if (interviewStartTime) {
+                const elapsed = Math.floor((Date.now() - interviewStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('elapsedTime').textContent =
+                    `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            if (answerStartTime) {
+                const response = Math.floor((Date.now() - answerStartTime) / 1000);
+                document.getElementById('responseTime').textContent = response;
+
+                if (response >= 120) {
+                    showError('Time is up! Submitting your answer...');
+                    submitAnswer();
+                }
+            }
+        }, 100);
+    }
+
+    async function submitAnswer() {
+        const answer = document.getElementById('answerInput').value.trim();
+        const responseTime = Math.floor((Date.now() - answerStartTime) / 1000);
+
+        showLoading(true);
+
+        try {
+            const response = await fetch('/phase1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'answer',
+                    answer: answer,
+                    response_time: responseTime,
+                    skipped: false
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.interview_complete) {
+                    document.getElementById('questionSection').classList.add('hidden');
+                    document.getElementById('completeSection').classList.remove('hidden');
+                    document.getElementById('mainLoading').style.display = 'none';
+
+                    setTimeout(() => {
+                        window.location.href = result.redirect;
+                    }, 3000);
+                } else {
+                    displayQuestion(result.next_question);
+                    answerStartTime = Date.now();
+                    showLoading(false);
+                }
+            } else {
+                showError(result.error || 'Failed to submit answer');
+                showLoading(false);
+            }
+        } catch (error) {
+            showError('Error: ' + error.message);
+            showLoading(false);
+        }
+    }
+
+    async function skipQuestion() {
+        const responseTime = Math.floor((Date.now() - answerStartTime) / 1000);
+
+        showLoading(true);
+
+        try {
+            const response = await fetch('/phase1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'answer',
+                    answer: '',
+                    response_time: responseTime,
+                    skipped: true
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.interview_complete) {
+                    document.getElementById('questionSection').classList.add('hidden');
+                    document.getElementById('completeSection').classList.remove('hidden');
+                    document.getElementById('mainLoading').style.display = 'none';
+
+                    setTimeout(() => {
+                        window.location.href = result.redirect;
+                    }, 3000);
+                } else {
+                    displayQuestion(result.next_question);
+                    answerStartTime = Date.now();
+                    showLoading(false);
+                }
+            } else {
+                showError(result.error || 'Failed to skip question');
+                showLoading(false);
+            }
+        } catch (error) {
+            showError('Error: ' + error.message);
+            showLoading(false);
+        }
+    }
+
+    // Initialize
+    document.getElementById('mainLoading').style.display = 'none';
+</script>
+{% endblock %}

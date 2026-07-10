@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Phase 2 - Scoring{% endblock %}
+
+{% block content %}
+<h2>📊 Phase 2: Automatic Scoring & Analysis</h2>
+<p style="color: #7f8c8d; margin-bottom: 30px;">Your responses are being evaluated using intelligent scoring rubrics...</p>
+
+<div class="alert alert-info">
+    <strong>Automated Analysis in Progress</strong>
+    <p style="margin-top: 10px;">
+        We're scoring each response against question-specific rubrics, evaluating your performance across
+        6 dimensions (technical depth, communication, problem-solving, confidence, self-awareness, and leadership),
+        and calculating your overall score and hiring verdict.
+    </p>
+</div>
+
+<div class="loading">
+    <div class="spinner"></div>
+    <div style="margin-top: 20px;">
+        <p><strong>Scoring in progress...</strong></p>
+        <div id="scoringSteps" style="margin-top: 15px; text-align: left; display: inline-block;">
+            <div id="step1" style="margin: 5px 0;"><span id="check1">⏳</span> Evaluating responses</div>
+            <div id="step2" style="margin: 5px 0;"><span id="check2">⏳</span> Calculating dimensions</div>
+            <div id="step3" style="margin: 5px 0;"><span id="check3">⏳</span> Generating analysis</div>
+            <div id="step4" style="margin: 5px 0;"><span id="check4">⏳</span> Preparing report</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function runScoring() {
+        const sessionId = '{{ session_id }}';
+
+        // Step 1: Score responses
+        setTimeout(() => {
+            document.getElementById('check1').textContent = '✓';
+            document.getElementById('step1').style.color = '#27ae60';
+        }, 500);
+
+        // Step 2: Calculate dimensions
+        setTimeout(() => {
+            document.getElementById('check2').textContent = '✓';
+            document.getElementById('step2').style.color = '#27ae60';
+        }, 1500);
+
+        // Step 3: Generate analysis
+        setTimeout(() => {
+            document.getElementById('check3').textContent = '✓';
+            document.getElementById('step3').style.color = '#27ae60';
+        }, 2500);
+
+        try {
+            const response = await fetch('/phase2/' + sessionId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('check4').textContent = '✓';
+                document.getElementById('step4').style.color = '#27ae60';
+
+                setTimeout(() => {
+                    showSuccess('Scoring complete! Generating your report...');
+                    window.location.href = result.redirect;
+                }, 1000);
+            } else {
+                showError(result.error || 'Scoring failed');
+            }
+        } catch (error) {
+            showError('Error: ' + error.message);
+        }
+    }
+
+    // Start scoring immediately
+    runScoring();
+</script>
+{% endblock %}

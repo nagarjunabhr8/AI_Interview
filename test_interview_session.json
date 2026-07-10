@@ -1,0 +1,111 @@
+{
+  "candidate": {
+    "role": "Senior QA Engineer",
+    "primary_skills": [
+      "Playwright",
+      "Java",
+      "Python"
+    ],
+    "years_of_experience": 8.5,
+    "difficulty_level": "Hard",
+    "resume": null,
+    "self_ratings": {
+      "Playwright": 4,
+      "Java": 4,
+      "Python": 5
+    },
+    "timestamp": "2026-07-09T10:00:00"
+  },
+  "session_start": "2026-07-09T22:39:34.527263",
+  "session_end": "2026-07-09T22:39:34.527263",
+  "elapsed_time_minutes": 0.0,
+  "responses": [
+    {
+      "question_id": "warmup_01",
+      "question_text": "Walk me through your background and current role. What drew you to this field?",
+      "section": "Introduction",
+      "answer": "I have been in QA for 8+ years, primarily focused on test automation and framework design.",
+      "is_skipped": false,
+      "score": null,
+      "scoring_rationale": null,
+      "response_time_seconds": 60,
+      "timestamp": "2026-07-09T22:39:34.527263"
+    },
+    {
+      "question_id": "qa_fundamentals_01",
+      "question_text": "What is the difference between SDLC and STLC? When does QA typically get involved?",
+      "section": "QA Fundamentals & SDLC/STLC",
+      "answer": "SDLC is the software development lifecycle covering all phases from design to deployment. STLC is the testing lifecycle specific to QA. QA gets involved early in requirements analysis.",
+      "is_skipped": false,
+      "score": null,
+      "scoring_rationale": null,
+      "response_time_seconds": 70,
+      "timestamp": "2026-07-09T22:39:34.527263"
+    },
+    {
+      "question_id": "qa_fundamentals_02",
+      "question_text": "Explain the difference between Verification and Validation.",
+      "section": "QA Fundamentals & SDLC/STLC",
+      "answer": "Smoke testing checks basic functionality post-build, sanity tests specific features, regression ensures no new defects.",
+      "is_skipped": false,
+      "score": null,
+      "scoring_rationale": null,
+      "response_time_seconds": 80,
+      "timestamp": "2026-07-09T22:39:34.527263"
+    },
+    {
+      "question_id": "qa_fundamentals_03",
+      "question_text": "What's the difference between Severity and Priority in a defect? Give an example.",
+      "section": "QA Fundamentals & SDLC/STLC",
+      "answer": "We prioritize by risk - critical business flows first, then frequently used features, then edge cases.",
+      "is_skipped": false,
+      "score": null,
+      "scoring_rationale": null,
+      "response_time_seconds": 90,
+      "timestamp": "2026-07-09T22:39:34.527263"
+    },
+    {
+      "question_id": "qa_testing_types_01",
+      "question_text": "Explain the difference between Smoke, Sanity, and Regression testing.",
+      "section": "Testing Types",
+      "answer": "I would design a Page Object Model framework with Playwright fixtures, data-driven tests, and CI/CD integration.",
+      "is_skipped": false,
+      "score": null,
+      "scoring_rationale": null,
+      "response_time_seconds": 100,
+      "timestamp": "2026-07-09T22:39:34.527263"
+    }
+  ],
+  "section_scores": {
+    "Introduction": {
+      "scores": [],
+      "average": 0
+    },
+    "QA Fundamentals & SDLC/STLC": {
+      "scores": [],
+      "average": 0
+    },
+    "Testing Types": {
+      "scores": [],
+      "average": 0
+    }
+  },
+  "dimension_scores": {
+    "technical_depth": 0,
+    "problem_solving": 0,
+    "communication_clarity": 0,
+    "confidence_composure": 0,
+    "self_awareness": 0,
+    "leadership_judgment": 0
+  },
+  "overall_score": 51.0,
+  "hiring_verdict": "No Hire (this round)",
+  "progress": {
+    "total_questions": 21,
+    "answered": 5,
+    "skipped": 0,
+    "remaining": 16,
+    "progress_percent": 23,
+    "elapsed_time_minutes": 0.0
+  }
+}

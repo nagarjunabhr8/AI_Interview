@@ -1,0 +1,17 @@
+{
+  "role": "Senior QA Engineer",
+  "primary_skills": [
+    "Playwright",
+    "Java",
+    "Python"
+  ],
+  "years_of_experience": 8.5,
+  "difficulty_level": "Hard",
+  "resume": null,
+  "self_ratings": {
+    "Playwright": 4,
+    "Java": 4,
+    "Python": 5
+  },
+  "timestamp": "2026-07-09T10:00:00"
+}

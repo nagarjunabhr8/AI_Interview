@@ -1,0 +1,125 @@
+{
+  "candidate": {
+    "role": "Senior QA Engineer",
+    "primary_skills": [
+      "Playwright",
+      "Java",
+      "Python"
+    ],
+    "years_of_experience": 8.5,
+    "difficulty_level": "Hard",
+    "resume": null,
+    "self_ratings": {
+      "Playwright": 4,
+      "Java": 4,
+      "Python": 5
+    },
+    "timestamp": "2026-07-09T10:00:00"
+  },
+  "session_metadata": {
+    "session_start": "2026-07-09T22:39:34.527263",
+    "session_end": "2026-07-09T22:39:34.527263",
+    "elapsed_time_minutes": 0.0
+  },
+  "analysis": {
+    "scored_responses": [
+      {
+        "question_id": "warmup_01",
+        "question_text": "Walk me through your background and current role. What drew you to this field?",
+        "section": "Introduction",
+        "answer": "I have been in QA for 8+ years, primarily focused on test automation and framework design.",
+        "is_skipped": false,
+        "score": 1,
+        "scoring_rationale": "Rambling, lacks structure or clarity",
+        "response_time_seconds": 60,
+        "timestamp": "2026-07-09T22:39:34.527263"
+      },
+      {
+        "question_id": "qa_fundamentals_01",
+        "question_text": "What is the difference between SDLC and STLC? When does QA typically get involved?",
+        "section": "QA Fundamentals & SDLC/STLC",
+        "answer": "SDLC is the software development lifecycle covering all phases from design to deployment. STLC is the testing lifecycle specific to QA. QA gets involved early in requirements analysis.",
+        "is_skipped": false,
+        "score": 3,
+        "scoring_rationale": "Correct definitions, mentions involvement in early phases",
+        "response_time_seconds": 70,
+        "timestamp": "2026-07-09T22:39:34.527263"
+      },
+      {
+        "question_id": "qa_fundamentals_02",
+        "question_text": "Explain the difference between Verification and Validation.",
+        "section": "QA Fundamentals & SDLC/STLC",
+        "answer": "Smoke testing checks basic functionality post-build, sanity tests specific features, regression ensures no new defects.",
+        "is_skipped": false,
+        "score": 1,
+        "scoring_rationale": "Confused or reversed definitions",
+        "response_time_seconds": 80,
+        "timestamp": "2026-07-09T22:39:34.527263"
+      },
+      {
+        "question_id": "qa_fundamentals_03",
+        "question_text": "What's the difference between Severity and Priority in a defect? Give an example.",
+        "section": "QA Fundamentals & SDLC/STLC",
+        "answer": "We prioritize by risk - critical business flows first, then frequently used features, then edge cases.",
+        "is_skipped": false,
+        "score": 1,
+        "scoring_rationale": "Confused, no clear distinction",
+        "response_time_seconds": 90,
+        "timestamp": "2026-07-09T22:39:34.527263"
+      },
+      {
+        "question_id": "qa_testing_types_01",
+        "question_text": "Explain the difference between Smoke, Sanity, and Regression testing.",
+        "section": "Testing Types",
+        "answer": "I would design a Page Object Model framework with Playwright fixtures, data-driven tests, and CI/CD integration.",
+        "is_skipped": false,
+        "score": 0,
+        "scoring_rationale": "No answer",
+        "response_time_seconds": 100,
+        "timestamp": "2026-07-09T22:39:34.527263"
+      }
+    ],
+    "section_analysis": {
+      "QA Fundamentals": {
+        "average_score": 4.0,
+        "performance_level": "Strong",
+        "total_questions": 2,
+        "scores": [
+          4,
+          4
+        ]
+      },
+      "Programming": {
+        "average_score": 4.2,
+        "performance_level": "Strong",
+        "total_questions": 1,
+        "scores": [
+          4
+        ]
+      }
+    },
+    "dimension_scores": {
+      "technical_depth": 4.0,
+      "problem_solving": 4.2,
+      "communication_clarity": 3.9,
+      "confidence_composure": 3.4,
+      "self_awareness": 4.0,
+      "leadership_judgment": 4.1
+    },
+    "overall_score": 78.5,
+    "hiring_verdict": "Hire",
+    "summary": {
+      "total_questions": 5,
+      "answered_questions": 5,
+      "skipped_questions": 0,
+      "response_rate_percent": 100,
+      "strengths": [
+        "Technical Depth: 4.0/5",
+        "Problem-Solving: 4.2/5",
+        "Leadership: 4.1/5"
+      ],
+      "weaknesses": [],
+      "recommendation": "Solid candidate with strong technical skills."
+    }
+  }
+}

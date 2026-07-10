@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Report - Senior QA Engineer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #34495e;
+            font-size: 16px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        tr:hover {
+            background: #f0f0f0;
+        }
+
+        .score-cell {
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .score-excellent {
+            color: #27ae60;
+        }
+
+        .score-strong {
+            color: #2980b9;
+        }
+
+        .score-adequate {
+            color: #f39c12;
+        }
+
+        .score-weak {
+            color: #e74c3c;
+        }
+
+        .score-poor {
+            color: #c0392b;
+        }
+
+        .summary-box {
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .verdict-box {
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .verdict-strong {
+            background: #d5f4e6;
+            border-left-color: #27ae60;
+        }
+
+        .verdict-hire {
+            background: #d6eaf8;
+            border-left-color: #2980b9;
+        }
+
+        .verdict-reservations {
+            background: #fdebd0;
+            border-left-color: #f39c12;
+        }
+
+        .verdict-nohire {
+            background: #fadbd8;
+            border-left-color: #e74c3c;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .score-item {
+            background: #ecf0f1;
+            padding: 12px;
+            border-radius: 4px;
+        }
+
+        .score-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .score-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #3498db;
+            margin-top: 5px;
+        }
+
+        .qa-block {
+            background: #f9f9f9;
+            border-left: 3px solid #95a5a6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+
+        .qa-question {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .qa-answer {
+            color: #555;
+            font-style: italic;
+            margin: 8px 0;
+            padding-left: 10px;
+            border-left: 2px solid #bdc3c7;
+        }
+
+        .qa-expected {
+            color: #27ae60;
+            margin: 8px 0;
+            padding-left: 10px;
+            border-left: 2px solid #27ae60;
+        }
+
+        .qa-score {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .strength-item, .weakness-item {
+            background: #f9f9f9;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid #27ae60;
+        }
+
+        .weakness-item {
+            border-left-color: #e74c3c;
+        }
+
+        .evidence {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .resource-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .resource-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .resource-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .page-break {
+            page-break-after: always;
+            margin: 40px 0;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            a {
+                color: #2980b9;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interview Assessment Report</h1>
+            <p class="subtitle">
+                Senior QA Engineer
+                • Hard Difficulty
+                • July 09, 2026 at 10:39 PM
+            </p>
+        </div>
+        <h2>Candidate Summary</h2>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td><strong>Role Targeted</strong></td>
+                <td>Senior QA Engineer</td>
+            </tr>
+            <tr>
+                <td><strong>Years of Experience</strong></td>
+                <td>8.5</td>
+            </tr>
+            <tr>
+                <td><strong>Primary Skills</strong></td>
+                <td>Playwright, Java, Python</td>
+            </tr>
+            <tr>
+                <td><strong>Interview Difficulty</strong></td>
+                <td>Hard</td>
+            </tr>
+            <tr>
+                <td><strong>Questions Asked</strong></td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td><strong>Questions Answered</strong></td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td><strong>Questions Skipped</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td><strong>Response Rate</strong></td>
+                <td>100%</td>
+            </tr>
+            <tr>
+                <td><strong>Interview Duration</strong></td>
+                <td>0.0 minutes</td>
+            </tr>
+        </table>
+        <h2>Overall Performance</h2>
+        <div class="verdict-box verdict-hire">
+            <div style="font-size: 36px; font-weight: 700; color: #2c3e50;">
+                78.5/100
+            </div>
+            <div style="font-size: 18px; font-weight: 600; margin-top: 10px;">
+                Hire
+            </div>
+            <p style="margin-top: 10px; color: #555;">
+                Solid candidate with good technical competencies and communication skills. Suitable for the role with positive trajectory.
+            </p>
+        </div>
+        <h2>Performance Dimensions</h2>
+        <table>
+            <tr>
+                <th>Dimension</th>
+                <th>Score</th>
+                <th>Level</th>
+            </tr>
+            <tr>
+                    <td>Technical Depth</td>
+                    <td class="score-cell score-strong">4.0/5</td>
+                    <td>Strong</td>
+                </tr><tr>
+                    <td>Problem Solving</td>
+                    <td class="score-cell score-strong">4.2/5</td>
+                    <td>Strong</td>
+                </tr><tr>
+                    <td>Communication Clarity</td>
+                    <td class="score-cell score-strong">3.9/5</td>
+                    <td>Strong</td>
+                </tr><tr>
+                    <td>Confidence Composure</td>
+                    <td class="score-cell score-adequate">3.4/5</td>
+                    <td>Adequate</td>
+                </tr><tr>
+                    <td>Self Awareness</td>
+                    <td class="score-cell score-strong">4.0/5</td>
+                    <td>Strong</td>
+                </tr><tr>
+                    <td>Leadership Judgment</td>
+                    <td class="score-cell score-strong">4.1/5</td>
+                    <td>Strong</td>
+                </tr>
+        </table>
+        <div class="page-break"></div>
+        <h2>Question-by-Question Transcript</h2>
+        <div class="qa-block">
+                <div class="qa-question">Q1: Walk me through your background and current role. What drew you to this field?</div>
+                <div class="qa-answer"><strong>Your Answer:</strong> I have been in QA for 8+ years, primarily focused on test automation and framework design.</div>
+                <div style="margin-top: 8px;"><span class='score-cell score-poor'>Score: 1/5</span></div>
+                <div style="color: #7f8c8d; font-size: 13px; margin-top: 5px;"><em>Rambling, lacks structure or clarity</em></div>
+            </div><div class="qa-block">
+                <div class="qa-question">Q2: What is the difference between SDLC and STLC? When does QA typically get involved?</div>
+                <div class="qa-answer"><strong>Your Answer:</strong> SDLC is the software development lifecycle covering all phases from design to deployment. STLC is the testing lifecycle specific to QA. QA gets involved early in requirements analysis.</div>
+                <div style="margin-top: 8px;"><span class='score-cell score-adequate'>Score: 3/5</span></div>
+                <div style="color: #7f8c8d; font-size: 13px; margin-top: 5px;"><em>Correct definitions, mentions involvement in early phases</em></div>
+            </div><div class="qa-block">
+                <div class="qa-question">Q3: Explain the difference between Verification and Validation.</div>
+                <div class="qa-answer"><strong>Your Answer:</strong> Smoke testing checks basic functionality post-build, sanity tests specific features, regression ensures no new defects.</div>
+                <div style="margin-top: 8px;"><span class='score-cell score-poor'>Score: 1/5</span></div>
+                <div style="color: #7f8c8d; font-size: 13px; margin-top: 5px;"><em>Confused or reversed definitions</em></div>
+            </div><div class="qa-block">
+                <div class="qa-question">Q4: What's the difference between Severity and Priority in a defect? Give an example.</div>
+                <div class="qa-answer"><strong>Your Answer:</strong> We prioritize by risk - critical business flows first, then frequently used features, then edge cases.</div>
+                <div style="margin-top: 8px;"><span class='score-cell score-poor'>Score: 1/5</span></div>
+                <div style="color: #7f8c8d; font-size: 13px; margin-top: 5px;"><em>Confused, no clear distinction</em></div>
+            </div><div class="qa-block">
+                <div class="qa-question">Q5: Explain the difference between Smoke, Sanity, and Regression testing.</div>
+                <div class="qa-answer"><strong>Your Answer:</strong> I would design a Page Object Model framework with Playwright fixtures, data-driven tests, and CI/CD integration.</div>
+                <div style="margin-top: 8px;"><span class='score-cell score-poor'>Score: 0/5</span></div>
+                <div style="color: #7f8c8d; font-size: 13px; margin-top: 5px;"><em>No answer</em></div>
+            </div>
+        <div class="page-break"></div>
+        <h2>Section-wise Performance Breakdown</h2>
+        <table>
+            <tr>
+                <th>Section</th>
+                <th>Avg Score</th>
+                <th>Level</th>
+                <th>Questions</th>
+            </tr>
+            <tr>
+                <td>Programming</td>
+                <td class="score-cell score-strong">4.2/5</td>
+                <td>Strong</td>
+                <td class="score-cell">1</td>
+            </tr><tr>
+                <td>QA Fundamentals</td>
+                <td class="score-cell score-strong">4.0/5</td>
+                <td>Strong</td>
+                <td class="score-cell">2</td>
+            </tr>
+        </table>
+        <h2>Key Strengths</h2>
+        <div class="strength-item">
+                <strong>Technical Depth: 4.0/5</strong>
+            </div><div class="strength-item">
+                <strong>Problem-Solving: 4.2/5</strong>
+            </div><div class="strength-item">
+                <strong>Leadership: 4.1/5</strong>
+            </div>
+        <h2>Areas for Improvement</h2>
+        
+        <div class="page-break"></div>
+        <h2>Communication & Presentation Feedback</h2>
+        <h3>Clarity & Structure</h3>
+        <p>⚠ <strong>Adequate</strong> - Answers had basic structure but could be more organized.</p>
+        <h3>Conciseness</h3>
+        <p>Ensure answers are appropriately detailed without unnecessary verbosity or excessive brevity.</p>
+        <h3>Technical Vocabulary</h3>
+        <p>Continue refining technical communication - balance precision with clarity for varied audiences.</p>
+        <h2>Recommended Next Steps</h2>
+        <h3>Study Plan (Prioritized by Weakness)</h3>
+        <div style='margin: 10px 0;'><strong>1. QA Fundamentals</strong> (Current: 4.0/5)</div><div style='margin: 10px 0;'><strong>2. Programming</strong> (Current: 4.2/5)</div>
+        <h3>Suggested Re-attempt Difficulty</h3>
+        <p>Current difficulty level is appropriate. For growth, consider **Hard/Advanced** level after 2-4 weeks of preparation.</p>
+        <h3>Resource Recommendations</h3>
+        <ul class="resource-list">
+            <li>Technical Fundamentals: SDLC/STLC, testing types, methodologies</li>
+            <li>Tool-Specific: Official documentation for declared tools</li>
+            <li>Coding Skills: LeetCode, HackerRank (Easy → Medium)</li>
+            <li>Communication: Practice explaining technical concepts</li>
+            <li>Mock Interviews: 2-3 before re-attempt</li>
+        </ul>
+        <div class="footer">
+            <p><strong>Generated:</strong> July 09, 2026 at 10:39 PM</p>
+            <p><strong>Assessment Version:</strong> 1.0</p>
+            <p>This report is confidential and intended for personal development. Best of luck with your continued growth!</p>
+        </div>
+    </div>
+</body>
+</html>
