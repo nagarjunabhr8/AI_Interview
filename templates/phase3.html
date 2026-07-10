@@ -173,12 +173,13 @@
         padding: 20px;
         border-radius: 5px;
         font-family: 'Courier New', monospace;
-        font-size: 12px;
+        font-size: 13px;
         line-height: 1.6;
-        max-height: 600px;
+        max-height: 900px;
         overflow-y: auto;
         white-space: pre-wrap;
         word-wrap: break-word;
+        border: 1px solid #ddd;
     }
 
     .html-view {
@@ -189,9 +190,21 @@
 
     .html-view iframe {
         width: 100%;
-        height: 600px;
+        height: 900px;
         border: none;
         border-radius: 5px;
+    }
+
+    .report-info {
+        background: #e3f2fd;
+        border-left: 4px solid #2196F3;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+
+    .report-info strong {
+        color: #1565c0;
     }
 
     @media (max-width: 768px) {
@@ -305,23 +318,29 @@
     </div>
 
     <!-- Tabs for Reports -->
-    <h3 style="margin-bottom: 15px;">📄 Detailed Reports</h3>
+    <h3 style="margin-bottom: 15px;">📄 Complete Interview Report</h3>
+
+    <div class="report-info">
+        <strong>Complete Q&A Transcript Included:</strong> The reports below contain your full interview transcript with all questions asked, your complete answers (no truncation), and detailed scoring.
+    </div>
+
     <div class="tab-buttons">
         <button class="tab-btn active" onclick="switchTab('markdown')">Markdown Report</button>
-        <button class="tab-btn" onclick="switchTab('html')">HTML Report</button>
+        <button class="tab-btn" onclick="switchTab('html')">HTML Report (Best for Printing)</button>
     </div>
 
     <div id="markdown" class="tab-content active">
         <p style="margin-bottom: 15px; color: #7f8c8d;">
-            <strong>Markdown Format:</strong> Copy or download for use in text editors, email, or documentation.
+            <strong>Markdown Format:</strong> Perfect for text editors, GitHub, documentation, and email. Includes full Q&A transcript.
         </p>
-        <div class="markdown-view" id="markdownContent"></div>
+        <div class="markdown-view" id="markdownContent">Loading report...</div>
     </div>
 
     <div id="html" class="tab-content">
         <p style="margin-bottom: 15px; color: #7f8c8d;">
-            <strong>HTML Format:</strong> Professional report with styling. Print to PDF for sharing.
+            <strong>HTML Format:</strong> Professional, styled report with your complete interview transcript. Optimized for printing to PDF.
         </p>
+        <div style="text-align: center; padding: 20px; color: #7f8c8d;">Loading HTML report...</div>
         <iframe id="htmlContent" src=""></iframe>
     </div>
 

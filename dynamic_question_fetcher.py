@@ -28,7 +28,8 @@ class DynamicQuestion:
                  expected_concepts: List[str] = None,
                  follow_up_questions: List[str] = None,
                  version_specific: Dict = None,
-                 is_recent: bool = False):
+                 is_recent: bool = False,
+                 section: str = None):
         self.id = question_id
         self.question_text = question_text
         self.difficulty = difficulty  # Common, Basic, Intermediate, Advanced, Mixed/Trick
@@ -40,6 +41,7 @@ class DynamicQuestion:
         self.version_specific = version_specific or {}
         self.is_recent = is_recent
         self.created_date = datetime.now().isoformat()
+        self.section = section or category  # Use category as section if not provided
 
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
@@ -48,6 +50,7 @@ class DynamicQuestion:
             'question': self.question_text,
             'difficulty': self.difficulty,
             'category': self.category,
+            'section': self.section,
             'source': self.source,
             'type': self.question_type,
             'expected_concepts': self.expected_concepts,

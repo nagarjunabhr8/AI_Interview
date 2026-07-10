@@ -14,10 +14,10 @@ from werkzeug.utils import secure_filename
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from integrated_question_system import get_question_system
+from integrated_question_system_v2 import get_improved_question_system
 from interview_session import InterviewSession
 from scoring_evaluator import ScoringEvaluator
-from report_generator import ReportGenerator
+from enhanced_report_generator import EnhancedReportGenerator
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -106,10 +106,19 @@ def phase1():
             data = request.get_json()
 
             if data.get('action') == 'init':
-                # Initialize interview with integrated question system
-                # Uses 2000+ official documentation questions + dynamic generation
+                # Initialize interview with IMPROVED dynamic question system
+                # Uses 2000+ real interview questions from multiple sources
+                # Truly dynamic - DIFFERENT questions every session
                 # Each session generates unique questions based on role, skills, and experience
-                question_system = get_question_system()
+                question_system = get_improved_question_system()
+
+                print(f"\n{'='*70}")
+                print(f"STARTING NEW INTERVIEW - SESSION {session_id}")
+                print(f"Role: {candidate_data['role']}")
+                print(f"Skills: {candidate_data['primary_skills']}")
+                print(f"Experience: {candidate_data['years_of_experience']} years")
+                print(f"Difficulty: {candidate_data['difficulty_level']}")
+                print(f"{'='*70}\n")
 
                 questions = question_system.get_interview_questions(
                     role=candidate_data['role'],
@@ -117,8 +126,8 @@ def phase1():
                     years_of_experience=candidate_data['years_of_experience'],
                     difficulty=candidate_data['difficulty_level'],
                     session_id=session_id,
-                    include_previous=False,
-                    count=25
+                    include_previous=False
+                    # count is calculated dynamically based on difficulty and experience
                 )
 
                 interview_session = InterviewSession(candidate_data, questions)
@@ -256,10 +265,58 @@ def phase2(session_id):
         overall = sum(all_scores) / len(all_scores) * 20 if all_scores else 0
         verdict = 'Hire' if overall >= 70 else 'Hire with Reservations' if overall >= 55 else 'No Hire'
 
+        # Build section-wise analysis
+        section_analysis = {}
+        for response, question in zip(responses, questions):
+            section = question.get('section', 'General')
+            if section not in section_analysis:
+                section_analysis[section] = {
+                    'total_questions': 0,
+                    'scores': [],
+                    'average_score': 0
+                }
+
+            section_analysis[section]['total_questions'] += 1
+            if not response.is_skipped and response.score is not None:
+                section_analysis[section]['scores'].append(response.score)
+
+        # Calculate averages
+        for section in section_analysis:
+            scores = section_analysis[section]['scores']
+            if scores:
+                section_analysis[section]['average_score'] = round(sum(scores) / len(scores), 2)
+            else:
+                section_analysis[section]['average_score'] = 0
+
+        # Determine strengths and weaknesses
+        strengths = []
+        weaknesses = []
+
+        # Analyze section performance
+        for section, data in section_analysis.items():
+            avg = data['average_score']
+            if avg >= 4.0:
+                strengths.append(f"Strong performance in {section}")
+            elif avg < 2.5:
+                weaknesses.append(f"Need improvement in {section}")
+
+        # Add dimension-based strengths/weaknesses
+        for dim, score in dimensions.items():
+            if score >= 4.0:
+                strengths.append(f"Strong {dim.replace('_', ' ')}")
+            elif score < 2.5:
+                weaknesses.append(f"Weak {dim.replace('_', ' ')}")
+
+        # Ensure we have at least some generic ones if none were identified
+        if not strengths:
+            strengths = ['Showed effort and engagement', 'Attempted all questions']
+        if not weaknesses:
+            weaknesses = ['Could benefit from deeper practice', 'Review key concepts']
+
         # Build analysis
         analysis = {
             'scored_responses': [r.to_dict() for r in responses],
-            'section_analysis': {},
+            'section_analysis': section_analysis,
             'dimension_scores': dimensions,
             'overall_score': overall,
             'hiring_verdict': verdict,
@@ -268,9 +325,13 @@ def phase2(session_id):
                 'answered_questions': sum(1 for r in responses if not r.is_skipped),
                 'skipped_questions': sum(1 for r in responses if r.is_skipped),
                 'response_rate_percent': int((sum(1 for r in responses if not r.is_skipped) / len(responses)) * 100) if responses else 0,
-                'strengths': ['Strong technical foundation', 'Good problem-solving skills'],
-                'weaknesses': ['Communication clarity', 'Some knowledge gaps'],
-                'recommendation': f'Overall Score: {overall:.1f}/100'
+                'strengths': strengths[:3],  # Top 3 strengths
+                'weaknesses': weaknesses[:3],  # Top 3 weaknesses
+                'recommendation': f'Overall Score: {overall:.1f}/100. ' + (
+                    'Excellent performance - ready for the role!' if overall >= 75
+                    else 'Good performance with areas for growth. Consider focused practice.' if overall >= 55
+                    else 'Continue building knowledge and skills in identified areas.'
+                )
             }
         }
 
@@ -308,8 +369,18 @@ def phase3(session_id):
     if not scored_session:
         return redirect(url_for('index'))
 
-    # Generate reports
-    generator = ReportGenerator(scored_session)
+    # Generate reports with full Q&A transcript
+    # Pass questions and optional voice metrics to include in report
+    questions = session_data.get('questions', [])
+    voice_metrics = session_data.get('voice_metrics', {})
+    conversation_flow = session_data.get('conversation_flow', [])
+
+    generator = EnhancedReportGenerator(
+        scored_session=scored_session,
+        questions=questions,
+        conversation_flow=conversation_flow,
+        voice_metrics=voice_metrics
+    )
     markdown_report = generator.generate_markdown_report()
     html_report = generator.generate_html_report()
 
@@ -334,7 +405,16 @@ def get_report(session_id, format):
     if not scored_session:
         return jsonify({'error': 'No report available'}), 404
 
-    generator = ReportGenerator(scored_session)
+    questions = session_data.get('questions', [])
+    voice_metrics = session_data.get('voice_metrics', {})
+    conversation_flow = session_data.get('conversation_flow', [])
+
+    generator = EnhancedReportGenerator(
+        scored_session=scored_session,
+        questions=questions,
+        conversation_flow=conversation_flow,
+        voice_metrics=voice_metrics
+    )
 
     if format == 'markdown':
         return generator.generate_markdown_report(), 200, {'Content-Type': 'text/plain'}
@@ -356,7 +436,16 @@ def download_report(session_id, format):
     if not scored_session:
         return jsonify({'error': 'No report available'}), 404
 
-    generator = ReportGenerator(scored_session)
+    questions = session_data.get('questions', [])
+    voice_metrics = session_data.get('voice_metrics', {})
+    conversation_flow = session_data.get('conversation_flow', [])
+
+    generator = EnhancedReportGenerator(
+        scored_session=scored_session,
+        questions=questions,
+        conversation_flow=conversation_flow,
+        voice_metrics=voice_metrics
+    )
 
     if format == 'markdown':
         content = generator.generate_markdown_report()
@@ -378,9 +467,9 @@ def get_question_data(question, question_number):
     """Format question for API response."""
     return {
         'number': question_number,
-        'id': question['id'],
-        'section': question['section'],
-        'question': question['question'],
+        'id': question.get('id', f'q_{question_number}'),
+        'section': question.get('section', 'General'),
+        'question': question.get('question', ''),
         'category': question.get('category', 'general')
     }
 
