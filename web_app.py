@@ -4,9 +4,12 @@ Web Application for AI Interview Panelist
 Flask-based web interface for all phases.
 """
 
+import base64
 import json
 import os
+import pickle
 import sys
+import tempfile
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.utils import secure_filename
@@ -23,13 +26,62 @@ from enhanced_report_generator import EnhancedReportGenerator
 app = Flask(__name__)
 app.secret_key = 'interview-agent-secret-key-2026'
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
+# Uploads go to the system temp dir: on Vercel only /tmp is writable, the rest
+# of the deployment bundle is read-only.
+app.config['UPLOAD_FOLDER'] = os.path.join(tempfile.gettempdir(), 'ai_interview_uploads')
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Global session storage
-sessions_store = {}
+
+class RedisSessionStore:
+    """Dict-like interview session store backed by Upstash Redis.
+
+    Serverless invocations don't share process memory, so state has to live
+    in an external store. Values include live InterviewSession objects (not
+    JSON-serializable), so they're pickled rather than stored as JSON.
+    """
+
+    TTL_SECONDS = 3 * 60 * 60  # one interview sitting
+
+    def __init__(self):
+        self._client = None
+
+    def _redis(self):
+        if self._client is None:
+            from upstash_redis import Redis
+            self._client = Redis(
+                url=os.environ['KV_REST_API_URL'],
+                token=os.environ['KV_REST_API_TOKEN']
+            )
+        return self._client
+
+    @staticmethod
+    def _key(session_id):
+        return f'interview_session:{session_id}'
+
+    def __setitem__(self, session_id, data):
+        payload = base64.b64encode(pickle.dumps(data)).decode('ascii')
+        self._redis().set(self._key(session_id), payload, ex=self.TTL_SECONDS)
+
+    def __getitem__(self, session_id):
+        raw = self._redis().get(self._key(session_id))
+        if raw is None:
+            raise KeyError(session_id)
+        return pickle.loads(base64.b64decode(raw))
+
+    def get(self, session_id, default=None):
+        try:
+            return self[session_id]
+        except KeyError:
+            return default
+
+    def __contains__(self, session_id):
+        return self._redis().get(self._key(session_id)) is not None
+
+
+# Session storage - persists across serverless invocations via Redis
+sessions_store = RedisSessionStore()
 
 
 @app.route('/')
@@ -137,6 +189,7 @@ def phase1():
                 session_data['questions'] = questions
                 session_data['current_question_index'] = 0
                 session_data['phase'] = 1
+                sessions_store[session_id] = session_data
 
                 return jsonify({
                     'success': True,
@@ -169,6 +222,7 @@ def phase1():
                 session_data['current_question_index'] = current_index
 
                 if current_index < len(questions):
+                    sessions_store[session_id] = session_data
                     next_question = get_question_data(questions[current_index], current_index + 1)
                     return jsonify({
                         'success': True,
@@ -182,6 +236,7 @@ def phase1():
                 else:
                     # Interview complete
                     interview_session.end_session()
+                    sessions_store[session_id] = session_data
                     return jsonify({
                         'success': True,
                         'interview_complete': True,
@@ -347,6 +402,7 @@ def phase2(session_id):
 
         session_data['scored_session'] = scored_session
         session_data['phase'] = 2
+        sessions_store[session_id] = session_data
 
         return jsonify({
             'success': True,
