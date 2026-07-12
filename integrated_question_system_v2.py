@@ -12,7 +12,8 @@ from dynamic_question_fetcher import (
 )
 from coding_logic_questions import get_coding_logic_questions
 from qa_process_questions import get_qa_process_questions
-from playwright_js_ts_questions import get_playwright_js_ts_questions, is_playwright_js_ts_combo
+from playwright_js_ts_questions import get_playwright_js_ts_questions, is_playwright_selected
+from universal_skills_questions import get_universal_skills_questions
 
 
 class ImprovedIntegratedQuestionSystem:
@@ -124,26 +125,40 @@ class ImprovedIntegratedQuestionSystem:
         coding_selected = coding_pool[:coding_target]
         qa_selected = qa_pool[:qa_target]
 
-        # Playwright's JS/TS-specific tooling questions (npm/npx, codegen,
-        # fixtures, auto-waiting, etc.) only apply when the candidate picked
-        # Playwright alongside JavaScript or TypeScript - Playwright-Python
-        # or Playwright-Java roles use a different API/ecosystem.
+        # Playwright is asked heavily whenever the candidate selects it
+        # (with JS/TS or on its own) - at least 50 questions out of the
+        # full interview come from this dedicated bank.
         playwright_selected = []
-        if is_playwright_js_ts_combo(skills):
-            playwright_target = random.randint(20, 30)
+        if is_playwright_selected(skills):
+            playwright_target = random.randint(50, 55)
             playwright_pool = [
                 q for q in get_playwright_js_ts_questions(playwright_target * 2) if _not_asked(q)
             ]
             playwright_selected = playwright_pool[:playwright_target]
 
+        # "Skills Set For All" - Jenkins/CI-CD, Agile/methodology, general
+        # programming practices, framework explanation, and tricky
+        # real-time scenarios - asked irrespective of the primary skill(s).
+        universal_target = random.randint(15, 20)
+        universal_pool = [
+            q for q in get_universal_skills_questions(universal_target * 3) if _not_asked(q)
+        ]
+        universal_selected = universal_pool[:universal_target]
+
         print(f"[Question Type Coverage] Organizing questions by type")
         print(f"  - Coding/logic questions reserved: {len(coding_selected)}")
         print(f"  - QA process questions reserved: {len(qa_selected)}")
-        print(f"  - Playwright (JS/TS) questions reserved: {len(playwright_selected)}")
+        print(f"  - Playwright questions reserved: {len(playwright_selected)}")
+        print(f"  - Universal 'Skills Set For All' questions reserved: {len(universal_selected)}")
 
         # Step 2: Fill the rest of the interview from technical/behavioral
         # pools, sized to whatever remains of `count` after the reservation.
-        remaining = max(0, count - len(coding_selected) - len(qa_selected) - len(playwright_selected))
+        # When Playwright is selected, its 50+ reservation plus the
+        # universal bank already consumes most of the interview, leaving
+        # only a smaller slice for the candidate's other named skill(s) -
+        # matching "minimum 50 Playwright, remaining Skills Set For All".
+        remaining = max(0, count - len(coding_selected) - len(qa_selected)
+                         - len(playwright_selected) - len(universal_selected))
         # Behavioral pool is small and fixed (~10 total), so it's just a
         # bonus on top - the official/skill technical pools have to supply
         # nearly all of `remaining` on their own to reach the full count.
@@ -187,7 +202,7 @@ class ImprovedIntegratedQuestionSystem:
         # Step 6: Combine reserved coding/QA/Playwright questions with the
         # filler pool and shuffle the whole set so they're interleaved,
         # not clustered.
-        selected = coding_selected + qa_selected + playwright_selected + filler_selected
+        selected = coding_selected + qa_selected + playwright_selected + universal_selected + filler_selected
         random.shuffle(selected)
         print(f"[Result] Total selected before field-normalization: {len(selected)}")
 
