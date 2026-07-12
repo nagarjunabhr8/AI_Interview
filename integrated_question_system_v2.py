@@ -194,8 +194,32 @@ class ImprovedIntegratedQuestionSystem:
 
         available_after_dedup = len(filler_pool)
         if available_after_dedup < remaining:
-            print(f"[Warning] Filler pool ({available_after_dedup}) smaller than target ({remaining})")
             filler_selected = filler_pool
+            shortfall = remaining - available_after_dedup
+            print(f"[Warning] Filler pool ({available_after_dedup}) smaller than target ({remaining})")
+            print(f"[Top-up] Pulling {shortfall} more from the universal/coding banks (largest, skill-agnostic pools)")
+
+            # Some skills (Selenium, Docker, Kubernetes, TypeScript, etc.)
+            # have much thinner dedicated technical content than Java or
+            # Python. Rather than accepting a much shorter interview,
+            # backfill the shortfall from the universal skills and coding
+            # logic banks - both large (70/28 questions) and not tied to
+            # any one skill, so they can comfortably absorb the gap.
+            already_ids = {
+                q.get('id') for q in
+                coding_selected + qa_selected + playwright_selected + universal_selected + filler_selected
+            }
+            topup_pool = [
+                q for q in get_universal_skills_questions(200)
+                if _not_asked(q) and q.get('id') not in already_ids
+            ]
+            topup_pool += [
+                q for q in get_coding_logic_questions(200, skills)
+                if _not_asked(q) and q.get('id') not in already_ids
+            ]
+            random.shuffle(topup_pool)
+            filler_selected += topup_pool[:shortfall]
+            print(f"[Top-up] Added {min(shortfall, len(topup_pool))} questions")
         else:
             filler_selected = filler_pool[:remaining]
 
