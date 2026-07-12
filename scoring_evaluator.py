@@ -61,10 +61,20 @@ class ScoringEvaluator:
         if is_skipped or not answer or answer in ["[SKIPPED]", "[NO RESPONSE]", "[INTERRUPTED]"]:
             return 0, "No answer provided (skipped, timeout, or no response)"
 
-        # Get question category and expected answer
-        category = question.get("category", "general")
+        # Category is a free-text field across many question banks (some
+        # use question-type labels like "scenario"/"coding_problem", older
+        # banks use topic labels like "Collections"/"OOP") - normalize case
+        # so labels that DO correspond to a specialized scorer are matched
+        # regardless of how they were capitalized when authored.
+        category = question.get("category", "general").strip().lower()
         expected_answer = question.get("expected_answer", "")
         question_guide = question.get("scoring_guide", self.scoring_guide["default"])
+
+        # A trivial non-answer ("I don't know", "not sure", single word)
+        # scores 1 regardless of category - everything else goes through
+        # the category-specific evaluators below.
+        if self._is_trivial_answer(answer):
+            return 1, question_guide.get(1, self.scoring_guide["default"][1])
 
         # Evaluate based on category
         if category == "fundamentals":
@@ -82,223 +92,287 @@ class ScoringEvaluator:
         else:
             return self._score_generic(answer, expected_answer, question_guide)
 
+    # ------------------------------------------------------------------
+    # Category-specific scorers
+    #
+    # All of these build on a shared base score derived from key-term
+    # overlap with the expected answer plus general answer substance
+    # (word count/structure), then apply category-specific bonuses for
+    # depth (examples, trade-offs, edge cases, structure). The base score
+    # never bottoms out at 0/1 purely because the candidate phrased a
+    # substantial, on-topic answer differently than the reference text -
+    # that was the main cause of unrealistically low scores across every
+    # section regardless of actual answer quality.
+    # ------------------------------------------------------------------
+
     def _score_fundamentals(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
         """Score fundamental/definition questions."""
-        answer_lower = answer.lower()
-        expected_lower = expected.lower()
+        base = self._base_score(answer, expected)
 
-        # Extract key terms from expected answer
-        key_terms = self._extract_key_terms(expected)
+        bonus = 0
+        if self._has_examples(answer) or self._has_trade_offs(answer):
+            bonus += 1
+        if self._has_second_layer(answer):
+            bonus += 1
 
-        # Check coverage
-        matching_terms = sum(1 for term in key_terms if term.lower() in answer_lower)
-        coverage = matching_terms / len(key_terms) if key_terms else 0
-
-        # Determine score
-        if coverage >= 0.8:
-            # Check for depth/nuance
-            if self._has_examples(answer) or self._has_trade_offs(answer):
-                return 5, guide[5]
-            elif self._has_second_layer(answer):
-                return 4, guide[4]
-            else:
-                return 3, guide[3]
-        elif coverage >= 0.5:
-            if self._has_examples(answer):
-                return 3, guide[3]
-            else:
-                return 2, guide[2]
-        elif coverage >= 0.25:
-            return 2, guide[2]
-        else:
-            return 1, guide[1]
+        score = self._clamp(base + bonus)
+        return score, guide.get(score, self.scoring_guide["default"][score])
 
     def _score_coding(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
         """Score coding/logic problems."""
         answer_lower = answer.lower()
+        base = self._base_score(answer, expected)
 
-        # Check for key indicators
         has_logic = self._has_logic_structure(answer)
-        has_complexity_discussion = "time" in answer_lower or "space" in answer_lower or "o(" in answer_lower
-        has_edge_cases = "edge" in answer_lower or "empty" in answer_lower or "null" in answer_lower
+        has_complexity_discussion = any(
+            term in answer_lower for term in ["time complexity", "space complexity", "o(", "big-o", "big o", "complexity", "efficient", "efficiency"]
+        )
+        has_edge_cases = any(
+            term in answer_lower for term in ["edge case", "empty", "null", "boundary", "negative number", "duplicate", "corner case"]
+        )
 
-        if not has_logic:
-            return 1, guide[1]
+        # A logically-described approach (even in plain English) is worth
+        # at least a baseline "correct core idea" score.
+        if has_logic:
+            base = max(base, 3)
 
-        # Score based on completeness
-        if has_complexity_discussion and has_edge_cases:
-            if self._has_trade_offs(answer):
-                return 5, guide[5]
-            else:
-                return 4, guide[4]
-        elif has_complexity_discussion or has_edge_cases:
-            return 3, guide[3]
-        elif has_logic:
-            return 2, guide[2]
-        else:
-            return 1, guide[1]
+        bonus = 0
+        if has_complexity_discussion:
+            bonus += 1
+        if has_edge_cases:
+            bonus += 1
+        if bonus >= 1 and self._has_trade_offs(answer):
+            bonus += 1
+
+        score = self._clamp(base + bonus)
+        return score, guide.get(score, self.scoring_guide["coding"][score])
 
     def _score_design(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
         """Score design/architecture questions."""
         answer_lower = answer.lower()
+        base = self._base_score(answer, expected)
 
-        # Check for design considerations
-        has_architecture = "architecture" in answer_lower or "design" in answer_lower or "pattern" in answer_lower
-        has_considerations = "consider" in answer_lower or "handle" in answer_lower or "manage" in answer_lower
-        has_scalability = "scale" in answer_lower or "performance" in answer_lower or "load" in answer_lower
+        has_architecture = self._has_design_thinking(answer)
+        has_considerations = any(term in answer_lower for term in ["consider", "handle", "manage", "trade-off", "constraint"])
+        has_scalability = any(term in answer_lower for term in ["scale", "scalability", "performance", "load", "throughput", "latency"])
         has_implementation = self._has_code_example(answer)
 
-        if not has_architecture and not has_design_thinking(answer):
-            return 1, guide[1]
+        if has_architecture:
+            base = max(base, 3)
 
-        design_points = sum([has_architecture, has_considerations, has_scalability, has_implementation])
+        bonus = sum([has_considerations, has_scalability, has_implementation])
+        if bonus >= 2 and self._has_trade_offs(answer):
+            bonus += 1
 
-        if design_points >= 3 and has_implementation:
-            if self._has_trade_offs(answer):
-                return 5, guide[5]
-            else:
-                return 4, guide[4]
-        elif design_points >= 2:
-            return 3, guide[3]
-        elif design_points >= 1:
-            return 2, guide[2]
-        else:
-            return 1, guide[1]
+        score = self._clamp(base + min(bonus, 2))
+        return score, guide.get(score, self.scoring_guide["default"][score])
 
     def _score_behavioral(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
         """Score behavioral/soft skill questions."""
         answer_lower = answer.lower()
 
-        # Look for STAR method
-        has_situation = any(word in answer_lower for word in ["started at", "was working", "working on", "situation", "was"])
-        has_task = any(word in answer_lower for word in ["needed to", "task", "challenge", "problem", "issue"])
-        has_action = any(word in answer_lower for word in ["i did", "i said", "i proposed", "action", "decided", "worked"])
-        has_result = any(word in answer_lower for word in ["result", "outcome", "learned", "improved", "resolved"])
+        # Look for STAR method components with a much broader vocabulary
+        # than a handful of exact phrases.
+        has_situation = any(word in answer_lower for word in [
+            "situation", "context", "at the time", "was working", "working on",
+            "during", "while i was", "back when", "on one project", "in a previous"
+        ])
+        has_task = any(word in answer_lower for word in [
+            "task", "challenge", "problem", "issue", "needed to", "had to", "responsible for", "goal was"
+        ])
+        has_action = any(word in answer_lower for word in [
+            "i did", "i decided", "i proposed", "i implemented", "i led", "i worked",
+            "action", "decided", "approached", "organized", "coordinated", "reached out", "escalated"
+        ])
+        has_result = any(word in answer_lower for word in [
+            "result", "outcome", "learned", "improved", "resolved", "led to", "as a result",
+            "ended up", "successfully", "impact", "reduced", "increased"
+        ])
 
         star_components = sum([has_situation, has_task, has_action, has_result])
 
-        # Check for specific details and metrics
         has_metrics = any(char.isdigit() for char in answer) or "%" in answer
-        has_reflection = "learned" in answer_lower or "improved" in answer_lower or "growth" in answer_lower
+        has_reflection = any(w in answer_lower for w in ["learned", "improved", "growth", "in hindsight", "next time"])
 
-        if star_components < 2:
-            return 1, guide[1]
-        elif star_components == 2:
-            return 2, guide[2]
-        elif star_components == 3:
-            if has_metrics or has_reflection:
-                return 4, guide[4]
-            else:
-                return 3, guide[3]
-        else:  # star_components == 4
-            if has_metrics and has_reflection:
-                return 5, guide[5]
-            elif has_metrics or has_reflection:
-                return 4, guide[4]
-            else:
-                return 3, guide[3]
+        # Substance floor: a lengthy, coherent narrative deserves at least
+        # a "core idea present" score even if it doesn't hit every STAR
+        # keyword bucket.
+        word_count = len(answer.split())
+        base = 3 if (star_components >= 2 or word_count >= 40) else max(1, 1 + star_components)
+
+        bonus = 0
+        if star_components >= 3:
+            bonus += 1
+        if has_metrics or has_reflection:
+            bonus += 1
+
+        score = self._clamp(base + bonus)
+        return score, guide.get(score, self.scoring_guide["behavioral"][score])
 
     def _score_tool(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
-        """Score tool-specific questions."""
+        """Score tool/framework-specific questions."""
         answer_lower = answer.lower()
-        expected_lower = expected.lower()
+        base = self._base_score(answer, expected)
 
-        # Extract key concepts from expected answer
-        key_concepts = self._extract_key_terms(expected)
-        matching = sum(1 for term in key_concepts if term.lower() in answer_lower)
-        coverage = matching / len(key_concepts) if key_concepts else 0
-
-        # Check for depth
-        has_architecture = "architecture" in answer_lower or "how" in answer_lower and "work" in answer_lower
-        has_advantages = "advantage" in answer_lower or "benefit" in answer_lower or "why" in answer_lower
+        has_how_it_works = "how" in answer_lower and ("work" in answer_lower or "use" in answer_lower)
+        has_advantages = any(term in answer_lower for term in ["advantage", "benefit", "why", "useful", "helps", "because"])
         has_examples = self._has_examples(answer)
 
-        if coverage >= 0.75:
-            if has_architecture and (has_advantages or has_examples):
-                return 5, guide[5]
-            elif has_architecture or has_advantages:
-                return 4, guide[4]
-            else:
-                return 3, guide[3]
-        elif coverage >= 0.5:
-            if has_examples:
-                return 3, guide[3]
-            else:
-                return 2, guide[2]
-        else:
-            return 1, guide[1]
+        bonus = sum([has_how_it_works, has_advantages, has_examples])
+        score = self._clamp(base + min(bonus, 2))
+        return score, guide.get(score, self.scoring_guide["default"][score])
 
     def _score_scenario(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
         """Score scenario/judgment questions."""
         answer_lower = answer.lower()
 
-        # Check for strategic thinking
-        has_prioritization = "priorit" in answer_lower or "first" in answer_lower or "critical" in answer_lower
-        has_risk_assessment = "risk" in answer_lower or "important" in answer_lower
-        has_communication = "commun" in answer_lower or "notify" in answer_lower or "stakeholder" in answer_lower
-        has_metrics = "measure" in answer_lower or "metric" in answer_lower or "track" in answer_lower
-        has_fallback = "fallback" in answer_lower or "contingency" in answer_lower or "plan b" in answer_lower
+        # Judgment answers rarely restate the reference answer's exact
+        # wording, but the reference text still captures the sound
+        # approach - use it as a base signal instead of ignoring it.
+        base = self._base_score(answer, expected)
 
-        components = sum([has_prioritization, has_risk_assessment, has_communication, has_metrics, has_fallback])
+        has_prioritization = any(term in answer_lower for term in [
+            "priorit", "first", "critical", "urgent", "immediately", "focus on"
+        ])
+        has_risk_assessment = any(term in answer_lower for term in [
+            "risk", "important", "impact", "severity", "consequence"
+        ])
+        has_communication = any(term in answer_lower for term in [
+            "commun", "notify", "stakeholder", "escalat", "inform", "discuss", "align", "team", "report", "flag"
+        ])
+        has_mitigation = any(term in answer_lower for term in [
+            "mitigat", "fallback", "contingency", "plan b", "rollback", "workaround", "document", "sign-off", "sign off"
+        ])
+        has_reasoning = any(term in answer_lower for term in [
+            "because", "since", "so that", "in order to", "therefore", "would"
+        ])
 
-        if components < 2:
-            return 1, guide[1]
-        elif components == 2:
-            return 2, guide[2]
-        elif components == 3:
-            return 3, guide[3]
-        elif components == 4:
-            if self._has_examples(answer):
-                return 5, guide[5]
-            else:
-                return 4, guide[4]
-        else:  # components == 5
-            return 5, guide[5]
+        components = sum([has_prioritization, has_risk_assessment, has_communication, has_mitigation, has_reasoning])
+
+        # A judgment-style answer with a clear course of action deserves
+        # credit even without hitting every one of these buckets.
+        if components >= 1:
+            base = max(base, 3)
+
+        bonus = 0
+        if components >= 3:
+            bonus += 1
+        if components >= 4 and self._has_examples(answer):
+            bonus += 1
+
+        score = self._clamp(base + bonus)
+        return score, guide.get(score, self.scoring_guide["default"][score])
 
     def _score_generic(self, answer: str, expected: str, guide: Dict) -> Tuple[int, str]:
-        """Generic scoring fallback."""
-        # Extract and match key terms
+        """Generic scoring fallback (also covers topic-labeled categories
+        from older question banks like 'Collections', 'OOP', 'Basics')."""
+        base = self._base_score(answer, expected)
+
+        bonus = 0
+        if self._has_trade_offs(answer):
+            bonus += 1
+        if self._has_examples(answer):
+            bonus += 1
+
+        score = self._clamp(base + min(bonus, 2))
+        return score, guide.get(score, self.scoring_guide["default"][score])
+
+    # ------------------------------------------------------------------
+    # Shared scoring helpers
+    # ------------------------------------------------------------------
+
+    def _base_score(self, answer: str, expected: str) -> int:
+        """
+        Derive a 1-5 base score from key-term overlap with the expected
+        answer, falling back to answer length/substance when there's
+        nothing meaningful to compare against (or the candidate simply
+        phrased a correct answer very differently).
+        """
+        word_count = len(answer.split())
         key_terms = self._extract_key_terms(expected)
-        matching = sum(1 for term in key_terms if term.lower() in answer.lower())
-        coverage = matching / len(key_terms) if key_terms else 0
 
-        if coverage >= 0.8:
-            return 5 if self._has_trade_offs(answer) else 4, guide[4 if not self._has_trade_offs(answer) else 5]
-        elif coverage >= 0.6:
-            return 4 if self._has_examples(answer) else 3, guide[3 if not self._has_examples(answer) else 4]
-        elif coverage >= 0.4:
-            return 2, guide[2]
-        elif coverage > 0:
-            return 1, guide[1]
-        else:
-            return 0, guide[0]
+        coverage = None
+        if key_terms:
+            matches = sum(1 for term in key_terms if term in answer.lower())
+            coverage = matches / len(key_terms)
 
-    # Helper methods
+        if coverage is not None and coverage >= 0.45:
+            return 4
+        if coverage is not None and coverage >= 0.25:
+            return 3
+        if coverage is not None and coverage >= 0.1:
+            return 3 if word_count >= 20 else 2
+
+        # Low/no measurable overlap with the reference text - judge on
+        # substance so a lengthy, coherent, on-topic answer isn't
+        # penalized purely for using different vocabulary.
+        if word_count >= 40:
+            return 3
+        if word_count >= 15:
+            return 2
+        if word_count >= 6:
+            return 2
+        return 1
+
+    def _clamp(self, score: int) -> int:
+        return max(1, min(5, score))
+
+    def _is_trivial_answer(self, answer: str) -> bool:
+        """Detect near-empty or explicit non-answers."""
+        normalized = answer.strip().lower().strip(".!? ")
+        trivial_phrases = {
+            "i don't know", "i dont know", "not sure", "no idea", "n/a", "na",
+            "idk", "skip", "pass", "none", "no comment", "not applicable",
+        }
+        if normalized in trivial_phrases:
+            return True
+        return len(answer.split()) < 3
 
     def _extract_key_terms(self, text: str) -> List[str]:
         """Extract important terms from text (words > 3 chars, not common)."""
-        common_words = {"the", "and", "for", "with", "from", "that", "this", "have", "will", "your"}
+        common_words = {
+            "the", "and", "for", "with", "from", "that", "this", "have", "will", "your",
+            "when", "what", "which", "would", "should", "could", "does", "into", "than",
+            "then", "them", "they", "there", "their", "about", "each", "these", "those",
+            "some", "such", "also", "over", "more", "most", "very", "just", "like",
+        }
         words = re.findall(r'\b\w+\b', text.lower())
         return [w for w in words if len(w) > 3 and w not in common_words]
 
     def _has_examples(self, text: str) -> bool:
-        """Check if answer includes examples."""
-        example_indicators = ["example", "such as", "like", "for instance", "e.g.", "in", "project", "case"]
+        """Check if answer includes concrete examples (specific enough
+        phrases to avoid false positives like "in my opinion")."""
+        example_indicators = [
+            "for example", "such as", "for instance", "e.g.", "in my experience",
+            "in my previous project", "in a previous role", "case study",
+            "real-world scenario", "in practice", "specifically,",
+        ]
         return any(indicator in text.lower() for indicator in example_indicators)
 
     def _has_trade_offs(self, text: str) -> bool:
         """Check if answer discusses trade-offs."""
-        tradeoff_indicators = ["trade-off", "tradeoff", "vs", "versus", "however", "but", "on the other hand", "benefit", "disadvantage"]
+        tradeoff_indicators = [
+            "trade-off", "tradeoff", "vs", "versus", "however", "but", "on the other hand",
+            "benefit", "disadvantage", "downside", "whereas", "compared to", "pros and cons",
+        ]
         return any(indicator in text.lower() for indicator in tradeoff_indicators)
 
     def _has_second_layer(self, text: str) -> bool:
         """Check if answer goes beyond surface level."""
-        depth_indicators = ["also", "additionally", "furthermore", "moreover", "such as", "specifically"]
+        depth_indicators = ["also", "additionally", "furthermore", "moreover", "such as", "specifically", "in addition", "beyond that"]
         return any(indicator in text.lower() for indicator in depth_indicators)
 
     def _has_logic_structure(self, text: str) -> bool:
-        """Check if coding answer has logical structure."""
-        logic_indicators = ["if", "for", "while", "loop", "function", "method", "=>", "=", "return", "append"]
+        """Check if a coding answer describes an algorithmic approach -
+        broad enough to recognize plain-English explanations, not just
+        literal code syntax."""
+        logic_indicators = [
+            "if", "for", "while", "loop", "iterate", "iteration", "traverse", "traversal",
+            "recursion", "recursive", "pointer", "index", "swap", "compare", "increment",
+            "decrement", "array", "list", "hashmap", "hash map", "dictionary", "stack",
+            "queue", "sort", "search", "function", "method", "algorithm", "return",
+            "append", "push", "pop", "step", "check", "counter", "variable",
+        ]
         return sum(1 for indicator in logic_indicators if indicator in text.lower()) >= 2
 
     def _has_code_example(self, text: str) -> bool:
@@ -308,7 +382,10 @@ class ScoringEvaluator:
 
     def _has_design_thinking(self, text: str) -> bool:
         """Check for design/architecture thinking."""
-        design_indicators = ["design", "pattern", "architecture", "structure", "component", "layer"]
+        design_indicators = [
+            "design", "pattern", "architecture", "structure", "component", "layer",
+            "module", "interface", "decouple", "separation of concerns", "scalab",
+        ]
         return any(indicator in text.lower() for indicator in design_indicators)
 
     def evaluate_communication(self, responses: List[Dict[str, Any]]) -> float:
@@ -429,9 +506,3 @@ class ScoringEvaluator:
             return 2  # Poor self-awareness
         else:
             return 1  # Very poor self-awareness
-
-
-def has_design_thinking(text: str) -> bool:
-    """Standalone function for design thinking check."""
-    design_indicators = ["design", "pattern", "architecture", "structure", "component", "layer"]
-    return any(indicator in text.lower() for indicator in design_indicators)
