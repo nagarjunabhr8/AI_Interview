@@ -21,6 +21,7 @@ from integrated_question_system_v2 import get_improved_question_system
 from interview_session import InterviewSession
 from scoring_evaluator import ScoringEvaluator
 from enhanced_report_generator import EnhancedReportGenerator
+from skill_parsing import parse_skills
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -102,7 +103,7 @@ def phase0():
             return jsonify({'error': 'Missing required fields'}), 400
 
         # Parse skills
-        skills = [s.strip() for s in data['skills'].split(',')]
+        skills = parse_skills(data['skills'])
 
         # Parse self-ratings
         self_ratings = {}
