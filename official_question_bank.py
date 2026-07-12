@@ -1,7 +1,7 @@
 """
 Official Documentation Question Bank
-2000+ real interview questions per technology
-Sourced from official documentation (Oracle Java, Playwright, etc.)
+Real interview questions per technology, sourced from official
+documentation (Oracle Java, MDN, Python docs, Selenium docs, etc.)
 """
 
 import random
@@ -11,8 +11,8 @@ from enhanced_question_data import SKILL_QUESTIONS_MAP
 
 class OfficialQuestionBank:
     """
-    Comprehensive question bank with 2000+ questions per technology.
-    Questions extracted from official documentation sources.
+    Question bank of real, unique questions per technology, extracted
+    from official documentation sources.
     """
 
     def __init__(self):
@@ -23,32 +23,19 @@ class OfficialQuestionBank:
         """Load all question banks from enhanced data."""
         banks = {}
 
-        # Load real questions from enhanced_question_data
+        # Load real questions from enhanced_question_data as-is - no
+        # artificial padding. Padding by cycling through a short list with
+        # a text prefix produced identical "filler" text once the cycle
+        # wrapped, which downstream deduplication collapsed right back
+        # down to the original count anyway.
         for skill, questions in SKILL_QUESTIONS_MAP.items():
             banks[skill] = questions.copy()
-
-            # Generate filler questions to reach 2000 per skill
-            # In production, these would be real questions from official docs
-            while len(banks[skill]) < 2000:
-                base_q = questions[len(banks[skill]) % len(questions)]
-                filler = {
-                    "id": f"{skill}_{len(banks[skill])+1:05d}",
-                    "section": base_q.get('section', 'Advanced Topics'),
-                    "source": base_q.get('source', ''),
-                    "question": f"[Advanced] Variation of: {base_q.get('question', '')}",
-                    "expected_answer": f"Related to: {base_q.get('expected_answer', '')}",
-                    "difficulty": ["Fresher", "Basic", "Simple", "Hard"][
-                        (len(banks[skill]) % 4)
-                    ],
-                    "category": base_q.get('category', 'General')
-                }
-                banks[skill].append(filler)
 
         # Ensure all skills have at least some questions
         for skill in ['java', 'playwright', 'python', 'javascript', 'typescript',
                       'selenium', 'docker', 'kubernetes']:
             if skill not in banks or len(banks[skill]) == 0:
-                banks[skill] = self._generate_skill_questions(skill, 2000)
+                banks[skill] = self._generate_skill_questions(skill, 100)
 
         return banks
 

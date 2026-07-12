@@ -10,6 +10,8 @@ from official_question_bank import OfficialQuestionBank
 from dynamic_question_fetcher import (
     JavaQuestionBank, SeleniumQuestionBank, TypeScriptQuestionBank
 )
+from coding_logic_questions import get_coding_logic_questions
+from qa_process_questions import get_qa_process_questions
 
 
 class ImprovedIntegratedQuestionSystem:
@@ -99,20 +101,45 @@ class ImprovedIntegratedQuestionSystem:
         print(f"  Calculated Question Count: {count}")
         print(f"{'='*70}\n")
 
-        # Step 1: Organize by question type for comprehensive coverage
-        print(f"[Question Type Coverage] Organizing questions by type")
-        print(f"  - Will ensure mix of: Technical, Programming, Behavioral")
+        # Already-asked-question lookup for this session, applied to every
+        # pool below so guaranteed-inclusion questions (coding/QA) still
+        # respect include_previous like the rest of the pipeline.
+        asked = set()
+        if session_id and not include_previous:
+            asked = self.session_history.get(session_id, {}).get('asked_questions', set())
 
-        # Calculate distribution for comprehensive coverage
-        behavioral_count = max(4, int(count * 0.25))  # ~25% behavioral
-        technical_count = max(count // 2, int(count * 0.50))  # ~50% technical
-        programming_count = max(2, int(count * 0.25))  # ~25% programming/coding
+        def _not_asked(q):
+            return self._normalize_question(q.get('question', '')).lower() not in asked
+
+        # Step 1: Reserve a fixed slice of coding/logic and QA-process
+        # questions - every interview, regardless of difficulty, includes
+        # a handful of each rather than only role-specific technical Qs.
+        coding_target = random.randint(2, 5)
+        qa_target = random.randint(5, 7)
+
+        coding_pool = [q for q in get_coding_logic_questions(coding_target * 4, skills) if _not_asked(q)]
+        qa_pool = [q for q in get_qa_process_questions(qa_target * 4) if _not_asked(q)]
+
+        coding_selected = coding_pool[:coding_target]
+        qa_selected = qa_pool[:qa_target]
+
+        print(f"[Question Type Coverage] Organizing questions by type")
+        print(f"  - Coding/logic questions reserved: {len(coding_selected)}")
+        print(f"  - QA process questions reserved: {len(qa_selected)}")
+
+        # Step 2: Fill the rest of the interview from technical/behavioral
+        # pools, sized to whatever remains of `count` after the reservation.
+        remaining = max(0, count - len(coding_selected) - len(qa_selected))
+        # Behavioral pool is small and fixed (~10 total), so it's just a
+        # bonus on top - the official/skill technical pools have to supply
+        # nearly all of `remaining` on their own to reach the full count.
+        behavioral_count = max(4, int(remaining * 0.25))
+        technical_count = remaining
 
         print(f"  - Behavioral questions target: {behavioral_count}")
         print(f"  - Technical questions target: {technical_count}")
-        print(f"  - Programming questions target: {programming_count}")
 
-        # Step 2: Get skill-specific questions from dynamic fetchers
+        # Step 3: Get skill-specific questions from dynamic fetchers
         print(f"\n[Question Generation] Getting questions for skills: {skills}")
         skill_questions = []
         for skill in skills:
@@ -120,55 +147,39 @@ class ImprovedIntegratedQuestionSystem:
             skill_questions.extend(skill_qs)
             print(f"  - {skill}: {len(skill_qs)} questions")
 
-        # Step 3: Get behavioral/general questions
+        # Step 4: Get behavioral/general questions
         behavioral = self._get_behavioral_questions(difficulty, behavioral_count)
         print(f"  - Behavioral/General: {len(behavioral)} questions")
 
-        # Step 4: Get official bank questions for technical depth
+        # Step 5: Get official bank questions for technical depth
         official = self._get_official_questions(skills, technical_count)
         print(f"  - Official Bank (Technical): {len(official)} questions")
 
-        # Combine all questions
-        all_questions = skill_questions + behavioral + official
-        print(f"\n[Question Pool] Total unique questions available: {len(all_questions)}")
+        # Combine the filler pool (everything besides the reserved
+        # coding/QA slices), dedupe, filter session history, and shuffle
+        filler_pool = skill_questions + behavioral + official
+        filler_pool = self._deduplicate(filler_pool)
+        filler_pool = [q for q in filler_pool if _not_asked(q)]
+        random.shuffle(filler_pool)
+        print(f"[Question Pool] Filler pool after dedup/session-filter: {len(filler_pool)}")
 
-        print(f"[Question Pool] Total unique questions available: {len(all_questions)}")
-
-        # Step 5: Deduplicate by question text
-        all_questions = self._deduplicate(all_questions)
-        print(f"[After Dedup] Unique questions: {len(all_questions)}")
-
-        # Step 6: Shuffle for randomization
-        random.shuffle(all_questions)
-
-        # Step 7: Select final set (ensure we get enough unique questions)
-        available_after_dedup = len(all_questions)
-        if available_after_dedup < count:
-            print(f"[Warning] Question pool ({available_after_dedup}) smaller than target ({count})")
-            print(f"[Action] Returning all {available_after_dedup} unique questions available")
-            selected = all_questions
+        available_after_dedup = len(filler_pool)
+        if available_after_dedup < remaining:
+            print(f"[Warning] Filler pool ({available_after_dedup}) smaller than target ({remaining})")
+            filler_selected = filler_pool
         else:
-            selected = all_questions[:count]
+            filler_selected = filler_pool[:remaining]
 
-        # Step 9: Handle session repetition tracking
+        # Step 6: Combine reserved coding/QA questions with the filler pool
+        # and shuffle the whole set so they're interleaved, not clustered.
+        selected = coding_selected + qa_selected + filler_selected
+        random.shuffle(selected)
+        print(f"[Result] Total selected before field-normalization: {len(selected)}")
+
+        # Step 7: Track for this session
         if session_id:
             if session_id not in self.session_history:
                 self.session_history[session_id] = {'asked_questions': set()}
-
-            if not include_previous:
-                # Remove previously asked questions
-                original_count = len(selected)
-                selected = [
-                    q for q in selected
-                    if self._normalize_question(q.get('question', '')).lower()
-                       not in self.session_history[session_id]['asked_questions']
-                ]
-                removed = original_count - len(selected)
-                if removed > 0:
-                    print(f"[Session Tracking] Removed {removed} previously asked questions")
-
-        # Step 10: Track for this session
-        if session_id:
             for q in selected:
                 normalized = self._normalize_question(q.get('question', ''))
                 self.session_history[session_id]['asked_questions'].add(normalized.lower())
@@ -354,48 +365,12 @@ class ImprovedIntegratedQuestionSystem:
 
     def _calculate_question_count(self, difficulty: str, years_of_experience: float) -> int:
         """
-        Calculate dynamic question count based on difficulty and experience.
-
-        Rules:
-        - Minimum: 20 questions
-        - Hard + 7+ years experience: 30+ questions
-        - Hard + 5-7 years: 28 questions
-        - Hard + <5 years: 25 questions
-        - Advanced: 25+ questions
-        - Intermediate: 20-23 questions
-        - Basic/Fresher: 15-20 questions
+        Every interview targets a full 100-question set regardless of
+        difficulty level or years of experience - difficulty instead
+        controls which question tiers get pulled in (see _map_difficulty),
+        not how many questions are asked overall.
         """
-        difficulty_lower = difficulty.lower()
-        experience = float(years_of_experience)
-
-        # Hard difficulty with significant experience
-        if difficulty_lower == 'hard' or difficulty_lower == 'advanced':
-            if experience > 7:
-                # Experienced senior engineers get comprehensive interview
-                count = 35  # 30+ questions with all types
-            elif experience >= 5:
-                # Mid-level engineers
-                count = 30
-            else:
-                # Junior engineers
-                count = 25
-        elif difficulty_lower in ['intermediate', 'simple']:
-            # Intermediate difficulty
-            if experience > 5:
-                count = 25
-            else:
-                count = 20
-        else:
-            # Basic/Fresher
-            if experience > 3:
-                count = 20
-            else:
-                count = 15
-
-        # Ensure minimum of 20 questions
-        count = max(20, count)
-
-        return count
+        return 100
 
     def clear_session_history(self, session_id: str = None):
         """Clear session history."""

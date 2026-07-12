@@ -505,14 +505,22 @@ KUBERNETES_QUESTIONS = [
     {"id": "k8s_001", "section": "Basics", "source": "https://kubernetes.io/docs/", "question": "What is Kubernetes?", "expected_answer": "Container orchestration platform for automating deployment, scaling, and management", "difficulty": "Fresher", "category": "Basics"},
 ]
 
-# Map skills to question sets
+from expanded_skill_questions import (
+    PYTHON_EXPANDED, JAVASCRIPT_EXPANDED, TYPESCRIPT_EXPANDED,
+    SELENIUM_EXPANDED, DOCKER_EXPANDED, KUBERNETES_EXPANDED,
+)
+
+# Map skills to question sets - the original stub lists above only had 1-3
+# real questions each for these skills, so they're merged with a much
+# larger expanded bank to give single-skill interviews enough unique
+# content to reach the full interview question count without repeats.
 SKILL_QUESTIONS_MAP = {
     'java': JAVA_QUESTIONS,
     'playwright': PLAYWRIGHT_QUESTIONS,
-    'python': PYTHON_QUESTIONS,
-    'javascript': JAVASCRIPT_QUESTIONS,
-    'typescript': TYPESCRIPT_QUESTIONS,
-    'selenium': SELENIUM_QUESTIONS,
-    'docker': DOCKER_QUESTIONS,
-    'kubernetes': KUBERNETES_QUESTIONS,
+    'python': PYTHON_QUESTIONS + PYTHON_EXPANDED,
+    'javascript': JAVASCRIPT_QUESTIONS + JAVASCRIPT_EXPANDED,
+    'typescript': TYPESCRIPT_QUESTIONS + TYPESCRIPT_EXPANDED,
+    'selenium': SELENIUM_QUESTIONS + SELENIUM_EXPANDED,
+    'docker': DOCKER_QUESTIONS + DOCKER_EXPANDED,
+    'kubernetes': KUBERNETES_QUESTIONS + KUBERNETES_EXPANDED,
 }
