@@ -14,6 +14,7 @@ from coding_logic_questions import get_coding_logic_questions
 from qa_process_questions import get_qa_process_questions
 from playwright_js_ts_questions import get_playwright_js_ts_questions, is_playwright_selected
 from universal_skills_questions import get_universal_skills_questions
+from api_testing_questions import get_api_testing_questions, is_api_testing_selected
 
 
 class ImprovedIntegratedQuestionSystem:
@@ -145,11 +146,25 @@ class ImprovedIntegratedQuestionSystem:
         ]
         universal_selected = universal_pool[:universal_target]
 
+        # API testing - status codes, config/base URL management, dynamic
+        # content and response validation, auth/token/session lifecycle
+        # across a full CRUD flow - reserved whenever the candidate
+        # selected an API-relevant skill (API/API Testing/Rest Assured/
+        # Postman/Playwright), blended with the matching tool flavor.
+        api_selected = []
+        if is_api_testing_selected(skills):
+            api_target = random.randint(15, 20)
+            api_pool = [
+                q for q in get_api_testing_questions(api_target * 2, skills) if _not_asked(q)
+            ]
+            api_selected = api_pool[:api_target]
+
         print(f"[Question Type Coverage] Organizing questions by type")
         print(f"  - Coding/logic questions reserved: {len(coding_selected)}")
         print(f"  - QA process questions reserved: {len(qa_selected)}")
         print(f"  - Playwright questions reserved: {len(playwright_selected)}")
         print(f"  - Universal 'Skills Set For All' questions reserved: {len(universal_selected)}")
+        print(f"  - API testing questions reserved: {len(api_selected)}")
 
         # Step 2: Fill the rest of the interview from technical/behavioral
         # pools, sized to whatever remains of `count` after the reservation.
@@ -158,7 +173,7 @@ class ImprovedIntegratedQuestionSystem:
         # only a smaller slice for the candidate's other named skill(s) -
         # matching "minimum 50 Playwright, remaining Skills Set For All".
         remaining = max(0, count - len(coding_selected) - len(qa_selected)
-                         - len(playwright_selected) - len(universal_selected))
+                         - len(playwright_selected) - len(universal_selected) - len(api_selected))
         # Behavioral pool is small and fixed (~10 total), so it's just a
         # bonus on top - the official/skill technical pools have to supply
         # nearly all of `remaining` on their own to reach the full count.
@@ -207,7 +222,7 @@ class ImprovedIntegratedQuestionSystem:
             # any one skill, so they can comfortably absorb the gap.
             already_ids = {
                 q.get('id') for q in
-                coding_selected + qa_selected + playwright_selected + universal_selected + filler_selected
+                coding_selected + qa_selected + playwright_selected + universal_selected + api_selected + filler_selected
             }
             topup_pool = [
                 q for q in get_universal_skills_questions(200)
@@ -223,10 +238,11 @@ class ImprovedIntegratedQuestionSystem:
         else:
             filler_selected = filler_pool[:remaining]
 
-        # Step 6: Combine reserved coding/QA/Playwright questions with the
-        # filler pool and shuffle the whole set so they're interleaved,
-        # not clustered.
-        selected = coding_selected + qa_selected + playwright_selected + universal_selected + filler_selected
+        # Step 6: Combine reserved coding/QA/Playwright/API/universal
+        # questions with the filler pool and shuffle the whole set so
+        # they're interleaved, not clustered.
+        selected = (coding_selected + qa_selected + playwright_selected
+                    + universal_selected + api_selected + filler_selected)
         random.shuffle(selected)
         print(f"[Result] Total selected before field-normalization: {len(selected)}")
 

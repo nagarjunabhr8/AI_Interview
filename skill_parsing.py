@@ -24,6 +24,7 @@ KNOWN_SKILLS = [
     "React", "Angular", "Node.js", "MongoDB", "PostgreSQL", "MySQL",
     "AWS", "Azure", "GCP", "SQL", "HTML", "CSS", "Git", "JUnit", "TestNG",
     "Cucumber", "C++", "C#", "Go", "Ruby", "PHP", "Rust", "Kotlin", "Swift",
+    "Rest Assured", "RestAssured", "Postman", "API Testing", "API",
 ]
 
 _SORTED_SKILLS = sorted(KNOWN_SKILLS, key=len, reverse=True)
