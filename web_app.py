@@ -91,8 +91,8 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/phase0', methods=['GET', 'POST'])
-def phase0():
+@app.route('/intake', methods=['GET', 'POST'])
+def intake():
     """Phase 0: Intake."""
     if request.method == 'POST':
         data = request.get_json()
@@ -138,14 +138,14 @@ def phase0():
         return jsonify({
             'success': True,
             'session_id': session_id,
-            'redirect': url_for('phase1')
+            'redirect': url_for('interview')
         })
 
     return render_template('phase0.html')
 
 
-@app.route('/phase1', methods=['GET', 'POST'])
-def phase1():
+@app.route('/interview', methods=['GET', 'POST'])
+def interview():
     """Phase 1: Interview."""
     session_id = session.get('session_id')
     if not session_id or session_id not in sessions_store:
@@ -241,7 +241,7 @@ def phase1():
                     return jsonify({
                         'success': True,
                         'interview_complete': True,
-                        'redirect': url_for('phase2', session_id=session_id)
+                        'redirect': url_for('scoring', session_id=session_id)
                     })
 
             return jsonify({'error': 'Invalid action'}), 400
@@ -269,8 +269,8 @@ def phase1():
     return render_template('phase1.html', candidate=candidate)
 
 
-@app.route('/phase2/<session_id>', methods=['GET', 'POST'])
-def phase2(session_id):
+@app.route('/scoring/<session_id>', methods=['GET', 'POST'])
+def scoring(session_id):
     """Phase 2: Scoring."""
     if session_id not in sessions_store:
         return redirect(url_for('index'))
@@ -408,14 +408,14 @@ def phase2(session_id):
         return jsonify({
             'success': True,
             'analysis': analysis,
-            'redirect': url_for('phase3', session_id=session_id)
+            'redirect': url_for('report', session_id=session_id)
         })
 
     return render_template('phase2.html', session_id=session_id)
 
 
-@app.route('/phase3/<session_id>', methods=['GET'])
-def phase3(session_id):
+@app.route('/report/<session_id>', methods=['GET'])
+def report(session_id):
     """Phase 3: Reports."""
     if session_id not in sessions_store:
         return redirect(url_for('index'))
