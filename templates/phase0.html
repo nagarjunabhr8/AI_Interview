@@ -2,6 +2,42 @@
 
 {% block title %}Phase 0 - Candidate Intake{% endblock %}
 
+{% block extra_css %}
+<style>
+    .skill-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .skill-chip {
+        padding: 6px 14px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        background: #ecf0f1;
+        color: #2c3e50;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .skill-chip:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .skill-chip.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h2>📋 Phase 0: Candidate Intake</h2>
 <p style="color: #7f8c8d; margin-bottom: 30px;">Let's gather some information before we begin your interview.</p>
@@ -29,7 +65,21 @@
     <div class="form-group">
         <label for="skills">Primary Skills (comma-separated) *</label>
         <input type="text" id="skills" name="skills" placeholder="e.g., Playwright, Java, Python" required>
-        <small style="color: #7f8c8d; display: block; margin-top: 5px;">Enter at least one skill</small>
+        <small style="color: #7f8c8d; display: block; margin-top: 5px;">Enter at least one skill, or click to add below</small>
+        <div class="skill-chips" id="skillChips">
+            <button type="button" class="skill-chip" data-skill="API Testing">API Testing</button>
+            <button type="button" class="skill-chip" data-skill="Rest Assured">Rest Assured</button>
+            <button type="button" class="skill-chip" data-skill="Postman">Postman</button>
+            <button type="button" class="skill-chip" data-skill="Playwright">Playwright</button>
+            <button type="button" class="skill-chip" data-skill="Selenium">Selenium</button>
+            <button type="button" class="skill-chip" data-skill="Java">Java</button>
+            <button type="button" class="skill-chip" data-skill="Python">Python</button>
+            <button type="button" class="skill-chip" data-skill="JavaScript">JavaScript</button>
+            <button type="button" class="skill-chip" data-skill="TypeScript">TypeScript</button>
+            <button type="button" class="skill-chip" data-skill="Jenkins">Jenkins</button>
+            <button type="button" class="skill-chip" data-skill="Docker">Docker</button>
+            <button type="button" class="skill-chip" data-skill="Kubernetes">Kubernetes</button>
+        </div>
     </div>
 
     <div class="form-group">
@@ -73,6 +123,38 @@
     const skillsInput = document.getElementById('skills');
     const ratingFields = document.getElementById('ratingFields');
     const skillRatings = document.getElementById('skillRatings');
+    const skillChips = document.querySelectorAll('.skill-chip');
+
+    function getCurrentSkills() {
+        return skillsInput.value.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    function syncChipActiveState() {
+        const current = getCurrentSkills().map(s => s.toLowerCase());
+        skillChips.forEach(chip => {
+            chip.classList.toggle('active', current.includes(chip.dataset.skill.toLowerCase()));
+        });
+    }
+
+    skillChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const skill = chip.dataset.skill;
+            const current = getCurrentSkills();
+            const idx = current.findIndex(s => s.toLowerCase() === skill.toLowerCase());
+
+            if (idx >= 0) {
+                current.splice(idx, 1);
+            } else {
+                current.push(skill);
+            }
+
+            skillsInput.value = current.join(', ');
+            syncChipActiveState();
+            skillsInput.dispatchEvent(new Event('change'));
+        });
+    });
+
+    skillsInput.addEventListener('input', syncChipActiveState);
 
     skillsInput.addEventListener('change', () => {
         const skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s);
