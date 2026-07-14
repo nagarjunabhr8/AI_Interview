@@ -10,78 +10,94 @@
     }
 
     .question-display {
-        background: #f9f9f9;
-        padding: 20px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        border-left: 4px solid #667eea;
+        background: var(--surface-50);
+        padding: 22px;
+        border-radius: var(--radius-md);
+        margin-bottom: 22px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--brand-600);
     }
 
     .question-number {
-        font-size: 12px;
-        color: #7f8c8d;
+        font-size: 11.5px;
+        color: var(--ink-400);
         text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 5px;
+        letter-spacing: 0.04em;
+        font-weight: 700;
+        margin-bottom: 8px;
     }
 
     .question-text {
-        font-size: 18px;
+        font-size: 17.5px;
         font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 15px;
+        color: var(--ink-900);
+        margin-bottom: 12px;
+        line-height: 1.5;
     }
 
     .question-meta {
         font-size: 12px;
-        color: #7f8c8d;
+        color: var(--ink-400);
     }
 
     .answer-input {
         width: 100%;
         padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
-        font-family: 'Courier New', monospace;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        font-size: 14.5px;
+        font-family: inherit;
         resize: vertical;
-        min-height: 120px;
-        margin-bottom: 15px;
+        min-height: 130px;
+        margin-bottom: 12px;
+        color: var(--ink-900);
     }
 
     .answer-input:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--brand-500);
+        box-shadow: 0 0 0 3.5px var(--brand-100);
     }
 
     .timer {
-        font-size: 12px;
-        color: #7f8c8d;
-        margin-top: 10px;
+        font-size: 12.5px;
+        color: var(--ink-400);
+        margin-top: 8px;
     }
 
     .progress-info {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding: 15px;
-        background: #d6eaf8;
-        border-radius: 5px;
+        margin-bottom: 22px;
+        padding: 16px 18px;
+        background: var(--surface-50);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 13.5px;
     }
 
     .progress-info strong {
-        color: #2980b9;
+        color: var(--ink-900);
+        font-weight: 600;
+    }
+
+    .progress-info .meta-secondary {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--ink-400);
+        text-align: right;
     }
 
     .btn-skip {
-        background: #e74c3c;
-        color: white;
+        background: var(--surface-0);
+        color: var(--danger);
+        border: 1px solid #fecaca;
     }
 
     .btn-skip:hover {
-        background: #c0392b;
+        background: var(--danger-bg);
+        border-color: var(--danger);
     }
 
     .hidden {
@@ -92,25 +108,24 @@
 
 {% block content %}
 <div class="interview-container">
-    <h2>🎤 Phase 1: Interview</h2>
+    <span class="eyebrow">Step 2 of 4</span>
+    <h2 style="margin-bottom: 22px;">Interview</h2>
 
     <div class="progress-info">
         <div>
-            <strong>Candidate:</strong> {{ candidate.role }}<br>
-            <strong>Difficulty:</strong> {{ candidate.difficulty_level }}
+            <strong>{{ candidate.role }}</strong><br>
+            <span style="color: var(--ink-400);">Difficulty: {{ candidate.difficulty_level }}</span>
         </div>
-        <div>
+        <div style="text-align: right;">
             <div id="progressText">Ready to start</div>
-            <div style="margin-top: 5px; font-size: 12px; color: #7f8c8d;">
-                Time: <span id="elapsedTime">0:00</span>
-            </div>
+            <div class="meta-secondary">Time: <span id="elapsedTime">0:00</span></div>
         </div>
     </div>
 
     <div id="introSection" class="alert alert-info">
-        <strong>Welcome to your technical interview!</strong>
+        <strong>Welcome to your technical interview</strong>
         <p style="margin-top: 10px; line-height: 1.6;">
-            You'll be asked {{ totalQuestions }} questions based on your profile. You have up to 2 minutes per question.
+            You'll be asked a series of questions tailored to your profile. You have up to 2 minutes per question.
             Click "Submit Answer" to move to the next question, or click "Skip" if you need to pass.
         </p>
         <button class="btn-primary" onclick="startInterview()" style="margin-top: 15px;">Start Interview</button>
@@ -128,10 +143,10 @@
         </div>
 
         <div>
-            <label style="display: block; margin-bottom: 10px; font-weight: 600;">Your Answer:</label>
+            <label style="display: block; margin-bottom: 10px; font-weight: 600; font-size: 14px;">Your Answer</label>
             <textarea id="answerInput" class="answer-input" placeholder="Type your answer here..."></textarea>
             <div class="timer">
-                ⏱️ Response time: <span id="responseTime">0</span>s / 120s
+                Response time: <span id="responseTime">0</span>s / 120s
             </div>
         </div>
 
@@ -143,7 +158,7 @@
 
     <div id="completeSection" class="hidden">
         <div class="alert alert-success">
-            <strong>Interview Complete! ✓</strong>
+            <strong>Interview complete</strong>
             <p style="margin-top: 10px;">All responses have been recorded. Proceeding to scoring...</p>
         </div>
         <div class="loading" style="display: block;">
@@ -160,7 +175,7 @@
 
 <script>
     let currentQuestion = null;
-    let totalQuestions = {{ candidate|length }};
+    let totalQuestions = 0;
     let questionStartTime = null;
     let interviewStartTime = null;
     let answerStartTime = null;

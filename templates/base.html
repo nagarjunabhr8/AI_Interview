@@ -4,7 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AI Interview Panelist{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --brand-50: #eef2ff;
+            --brand-100: #e0e7ff;
+            --brand-500: #6366f1;
+            --brand-600: #4f46e5;
+            --brand-700: #4338ca;
+
+            --ink-900: #0f172a;
+            --ink-800: #1e293b;
+            --ink-600: #475569;
+            --ink-400: #94a3b8;
+
+            --surface-0: #ffffff;
+            --surface-50: #f8fafc;
+            --surface-100: #f1f5f9;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+
+            --success: #059669;
+            --success-bg: #ecfdf5;
+            --danger: #dc2626;
+            --danger-bg: #fef2f2;
+            --warning: #d97706;
+            --warning-bg: #fffbeb;
+            --info: #2563eb;
+            --info-bg: #eff6ff;
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,53 +50,120 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--ink-800);
+            background: var(--surface-100);
             min-height: 100vh;
-            padding: 20px;
+            padding: 32px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            color: var(--ink-900);
+            letter-spacing: -0.01em;
+        }
+
+        .page {
+            max-width: 1040px;
+            margin: 0 auto;
         }
 
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: var(--surface-0);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            background: var(--ink-900);
             color: white;
-            padding: 30px;
-            text-align: center;
+            padding: 36px 40px;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .header-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: white;
         }
 
         .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 2px;
         }
 
         .header p {
-            font-size: 14px;
-            opacity: 0.9;
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
         }
 
         .content {
             padding: 40px;
         }
 
+        .content h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .content h3 {
+            font-size: 16px;
+            color: var(--ink-900);
+        }
+
+        .eyebrow {
+            display: inline-block;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--brand-600);
+            background: var(--brand-50);
+            padding: 4px 10px;
+            border-radius: 100px;
+            margin-bottom: 12px;
+        }
+
+        .subtext {
+            color: var(--ink-600);
+            font-size: 14.5px;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #2c3e50;
+            font-size: 14px;
+            color: var(--ink-800);
         }
 
         .form-group input[type="text"],
@@ -66,19 +171,22 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            padding: 11px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            font-size: 14.5px;
             font-family: inherit;
+            color: var(--ink-900);
+            background: var(--surface-0);
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
 
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--brand-500);
+            box-shadow: 0 0 0 3.5px var(--brand-100);
         }
 
         .form-group textarea {
@@ -86,102 +194,122 @@
             min-height: 100px;
         }
 
+        .form-group small {
+            color: var(--ink-400);
+            font-size: 12.5px;
+            display: block;
+            margin-top: 6px;
+        }
+
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 30px;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        button, .btn-primary, .btn-secondary, .btn-success {
+            font-family: inherit;
         }
 
         button {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
+            padding: 11px 24px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-size: 14.5px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.15s;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--brand-600);
             color: white;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            background: var(--brand-700);
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);
         }
 
         .btn-secondary {
-            background: #ecf0f1;
-            color: #2c3e50;
+            background: var(--surface-0);
+            color: var(--ink-800);
+            border-color: var(--border-strong);
         }
 
         .btn-secondary:hover {
-            background: #bdc3c7;
+            background: var(--surface-100);
+            border-color: var(--ink-400);
         }
 
         .btn-success {
-            background: #27ae60;
+            background: var(--success);
             color: white;
         }
 
         .btn-success:hover {
-            background: #229954;
+            background: #047857;
         }
 
         .progress-bar {
             width: 100%;
-            height: 4px;
-            background: #ecf0f1;
-            border-radius: 2px;
+            height: 6px;
+            background: var(--surface-100);
+            border-radius: 100px;
             overflow: hidden;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: var(--brand-600);
+            border-radius: 100px;
             transition: width 0.3s;
         }
 
         .alert {
-            padding: 15px 20px;
-            border-radius: 5px;
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
             margin-bottom: 20px;
+            font-size: 14.5px;
+            border: 1px solid transparent;
+        }
+
+        .alert strong {
+            font-weight: 700;
         }
 
         .alert-success {
-            background: #d5f4e6;
-            color: #27ae60;
-            border-left: 4px solid #27ae60;
+            background: var(--success-bg);
+            color: #065f46;
+            border-color: #a7f3d0;
         }
 
         .alert-error {
-            background: #fadbd8;
-            color: #e74c3c;
-            border-left: 4px solid #e74c3c;
+            background: var(--danger-bg);
+            color: #991b1b;
+            border-color: #fecaca;
         }
 
         .alert-info {
-            background: #d6eaf8;
-            color: #2980b9;
-            border-left: 4px solid #2980b9;
+            background: var(--info-bg);
+            color: #1e40af;
+            border-color: #bfdbfe;
         }
 
         .loading {
             display: none;
             text-align: center;
-            padding: 20px;
+            padding: 24px;
         }
 
         .spinner {
-            border: 4px solid #ecf0f1;
-            border-top: 4px solid #667eea;
+            border: 3px solid var(--surface-100);
+            border-top: 3px solid var(--brand-600);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
             margin: 0 auto;
         }
 
@@ -191,33 +319,42 @@
         }
 
         .footer {
-            background: #ecf0f1;
-            padding: 20px;
+            background: var(--surface-50);
+            padding: 20px 40px;
             text-align: center;
-            color: #7f8c8d;
-            font-size: 12px;
-            border-top: 1px solid #bdc3c7;
+            color: var(--ink-400);
+            font-size: 12.5px;
+            border-top: 1px solid var(--border);
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
             .container {
                 margin: 0;
                 border-radius: 0;
+                border: none;
+            }
+
+            .header {
+                padding: 24px 20px;
             }
 
             .header h1 {
-                font-size: 24px;
+                font-size: 20px;
             }
 
             .content {
-                padding: 20px;
+                padding: 22px;
             }
 
             .button-group {
                 flex-direction: column;
             }
 
-            button {
+            button:not(.skill-chip) {
                 width: 100%;
             }
         }
@@ -225,18 +362,30 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎯 AI Interview Panelist</h1>
-            <p>Professional Mock Interviews with Intelligent Scoring</p>
-        </div>
+    <div class="page">
+        <div class="container">
+            <div class="header">
+                <div class="header-inner">
+                    <div class="header-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1>{% block header_title %}AI Interview Panelist{% endblock %}</h1>
+                        <p>{% block header_subtitle %}Professional Mock Interviews with Intelligent Scoring{% endblock %}</p>
+                    </div>
+                </div>
+            </div>
 
-        <div class="content">
-            {% block content %}{% endblock %}
-        </div>
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
 
-        <div class="footer">
-            <p>© 2026 AI Interview Panelist • Professional Technical Interview Simulation</p>
+            <div class="footer">
+                <p>&copy; 2026 AI Interview Panelist &bull; Professional Technical Interview Simulation</p>
+            </div>
         </div>
     </div>
 
